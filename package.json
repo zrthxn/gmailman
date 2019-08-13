@@ -1,0 +1,25 @@
+{
+  "name": "gmailer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "EmailDistributionWorker.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AzimJaved/gmailer.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AzimJaved/gmailer/issues"
+  },
+  "homepage": "https://github.com/AzimJaved/gmailer#readme",
+  "dependencies": {
+    "googleapis": "^42.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^12.7.1"
+  }
+}
