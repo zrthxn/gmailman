@@ -1,9 +1,8 @@
 const os = require('os');
-const cluster = require('cluster');
 const { spawn, fork } = require('child_process');
 
 export class LoadBalancer {
-    public deployNewInstance = function (filename, count, payload, mode) {
+    deployNewInstance = function (filename, count, payload, mode) {
         if (mode === 'strict') {
             if (payload.length !== count) throw "Payload count mismatch :: Load Balancer"
             // No of deployed nodes = cpu count

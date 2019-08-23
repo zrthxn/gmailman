@@ -2,14 +2,15 @@ const { google } = require("googleapis");
 const fs = require("fs");
 const readline = require("readline");
 const GmailConfig = require("./config.json").Gmail
-const LoadBalancer = require("./LoadBalancer.ts");
+import { LoadBalancer } from "./LoadBalancer";
 
-class GmailerC {
-    SCOPES;
-    CREDENTIALS_PATH;
-    TOKEN_PATH;
-    sendFrequency;
-    Head;
+export default class Gmail {
+    readonly LB = new LoadBalancer();
+    readonly SCOPES;
+    readonly CREDENTIALS_PATH;
+    readonly TOKEN_PATH;
+    readonly sendFrequency;
+    readonly Head;
     constructor() {
         this.SCOPES = ['https://mail.google.com'];
         this.CREDENTIALS_PATH = './GoogleAPIs/Gmail/credentials.json';
@@ -241,6 +242,6 @@ class GmailerC {
                 data: head + data
             })
         }
-        LoadBalancer.deployNewInstance('./EmailDistributionWorker.ts', count, payload, 'free')
+        this.LB.deployNewInstance('./EmailDistributionWorker.ts', count, payload, 'free')
     }
 }
