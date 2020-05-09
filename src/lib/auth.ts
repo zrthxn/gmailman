@@ -76,7 +76,7 @@ export async function getNewToken(oAuth2Client:OAuth2Client, email:string, scope
             let config = await readConfigFile()
             config.accounts[email] = {
               token: path.join(MAILDIR, 'auth', email, `token-${+new Date}.json`),
-              authorizedOn: +new Date
+              expiresOn: token.expiry_date
             }
             
             fs.writeFileSync(path.join(MAILDIR, 'gmailer.config.json'), JSON.stringify(config, null, 2))
