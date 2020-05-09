@@ -1,6 +1,6 @@
-import { google } from 'googleapis'
 import fs from 'fs'
 import readline from 'readline'
+import { google } from 'googleapis'
 import { OAuth2Client } from 'googleapis-common'
 import { deployNewInstance } from './LoadBalancer'
 
@@ -8,8 +8,9 @@ const GmailConfig = require('../../assets/config.json').gmailer
 
 export default class Gmailer {
 	readonly SCOPES = ['https://mail.google.com']
-	readonly CREDENTIALS_PATH = './auth/credentials.json'
-	readonly TOKEN_PATH = './auth/Tokens/gmailer.json'
+
+	private readonly CREDENTIALS_PATH = './auth/credentials.json'
+	private readonly TOKEN_PATH = './auth/Tokens/gmailer.json'
 
 	readonly Head
 	readonly MultipartSepartor
@@ -93,7 +94,7 @@ export default class Gmailer {
 		})
 	}
 
-	TestGmailer = async () => {
+	async TestGmailer() {
 		console.log('Testing GMail API')
     try {
       const auth = await this.authorize()
