@@ -9,46 +9,76 @@ import readline from 'readline'
 import { google } from 'googleapis'
 import { OAuth2Client } from 'googleapis-common'
 
-export function authorize(email) {
-  return new Promise((resolve:((client:OAuth2Client)=>any), reject) => {
-    fs.readFile(this.CREDENTIALS_PATH, (err, content) => {
-      if (err) return console.error('Error loading client secret file:', err)
-      
-      const credentials = JSON.parse(content.toString())
-      const { client_secret, client_id, redirect_uris } = credentials.installed
-      const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0])
-  
-      fs.readFile(this.TOKEN_PATH, (e, token) => {
-        if (e) {
-          this.getNewToken(oAuth2Client).then((auth) => resolve(auth))
-        } else {
-          oAuth2Client.setCredentials(JSON.parse(<string><unknown>token))
-          resolve(oAuth2Client)
-        }
-      })
-    })
-  })
+import { MAILDIR } from './cli'
+import { readCredentialsFile, readTokenFile, readConfigFile } from './accounts'
+import path from 'path'
+
+/**
+ * Authorize with stored credentials file
+ * @param email 
+ */
+export async function authorize(email:string) {
+  const credentials = await readCredentialsFile(email)
+  try {
+    if(credentials.hasOwnProperty('installed'))
+      throw "Invalid credentials file."
+
+    const { client_secret, client_id, redirect_uris } = credentials.installed
+    const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0])
+
+    const token = await readTokenFile(email)
+    if(!token)
+      return await getNewToken(oAuth2Client, email)
+    else {
+      oAuth2Client.setCredentials(JSON.parse(<string><unknown>token))
+      return oAuth2Client
+    }
+  } catch (error) {
+    console.error(error)
+    return Promise.reject(error)
+  }
 }
 
-export function getNewToken(oAuth2Client:OAuth2Client) {
-  return new Promise((resolve:((client:OAuth2Client)=>any), reject) => {
-    const rlx = readline.createInterface({ input: process.stdin, output: process.stdout })
+/**
+ * Generate a new token file
+ * @param oAuth2Client Client with set credentials
+ * @param email UserID
+ * @param scopes Google scopes
+ */
+export async function getNewToken(oAuth2Client:OAuth2Client, email:string, scopes?:string[]) {
+  var SCOPES = ['https://mail.google.com']
+  if(scopes)
+    SCOPES = scopes
+
+  const rlx = readline.createInterface({ input: process.stdin, output: process.stdout })
+
+  return new Promise((resolve:((client:OAuth2Client) => any), reject) => {
     rlx.question('Invalid or no token found. Generate new? (Y/N)...', (code) => {
-      if (code.toLowerCase() === 'y' || code.toLowerCase() === 'yes') {
+      if (code.toLowerCase()==='y' || code.toLowerCase()==='yes') {
         const authUrl = oAuth2Client.generateAuthUrl({
           access_type: 'offline',
-          scope: this.SCOPES,
+          scope: SCOPES
         })
+
         console.log('Authorization URL:', authUrl)
         const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
+        
         rl.question('Validation code: ', (auth) => {
           rl.close()
-          oAuth2Client.getToken(auth, (err, token) => {
-            if (err) return console.error('Error retrieving access token', err)
+          oAuth2Client.getToken(auth, async (err, token) => {
+            if(err) throw `Error retrieving access token: ${err}`
+            
             oAuth2Client.setCredentials(token)
-            fs.writeFile(this.TOKEN_PATH, JSON.stringify(token, null, 2), (err) => {
+
+            let config = await readConfigFile()
+            config.accounts[email] = {
+              token: path.join(MAILDIR, 'auth', email, `token-${+new Date}.json`),
+              authorizedOn: +new Date
+            }
+
+            fs.writeFile(config.accounts[email].token, JSON.stringify(token, null, 2), (err) => {
               if (err) return reject(err)
-              console.log('Token stored to', this.TOKEN_PATH)
+              console.log('\tToken stored to', config.accounts[email].token)
               resolve(oAuth2Client)
             })
           })
@@ -58,12 +88,17 @@ export function getNewToken(oAuth2Client:OAuth2Client) {
   })
 }
 
-export async function TestToken() {
+/**
+ * Test stored token by authorizing with credentials
+ */
+export async function testToken(email:string) {
   console.log('Testing GMail API')
   try {
-    const auth = await this.authorize()
-    const testObj = google.sheets({version: 'v4', auth})
-    if (testObj!=null) return({ success: true })
+    const auth = await authorize(email)
+    const testObj = google.gmail({ version: 'v1', auth })
+    
+    if (!testObj) 
+      return({ success: true })
   } catch(err) {
     console.error(err)
     return Promise.reject({ success: false, errors: [err] })

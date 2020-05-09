@@ -3,16 +3,19 @@
  * Handle CLI inputs, invoke relevant functions and 
  * act as accounts interface.
  */
-
-import colors from 'colors'
+import path from 'path'
 
 import * as accounts from './accounts'
 import * as auth from './auth'
 
-const [ func, task ] = process.argv.splice(process.execArgv.length + 2)
-const args = process.argv.splice(process.execArgv.length + 4)
+export const MAILDIR = path.join(process.cwd(), 'mail')
 
-var VERBOSITY = true
+const [ func, task ] = process.argv.slice(process.execArgv.length + 2)
+const args = process.argv.slice(process.execArgv.length + 4)
+
+console.log('Get your credentials file at https://developers.google.com/gmail/api/quickstart/nodejs')
+
+process.env['VERBOSITY'] = 'true'
 
 switch (func) {
   case 'account':
@@ -25,8 +28,14 @@ switch (func) {
     authHandler(task, args)
     break
 
+  case 'template':
+    // use gmailer from the CLI
+    console.log('To be implemented')
+    break
+
   case 'send':
     // use gmailer from the CLI
+    console.log('To be implemented')
     break
 
   default:
@@ -40,8 +49,7 @@ switch (func) {
  * @param args 
  */
 export function accountHandler(task: string, args: string[]) {
-  if(!args.length)
-    return console.error('Too few arguments')
+  if(!args) return console.error('Too few arguments')
   
   const [ email, credentials ] = args
   switch (task) {
@@ -64,8 +72,7 @@ export function accountHandler(task: string, args: string[]) {
  * @param args 
  */
 export function authHandler(task: string, args: string[]) {
-  if(!args.length)
-    return console.error('Too few arguments')
+  if(!args) return console.error('Too few arguments')
 
   const [ email ] = args
   switch (task) {
@@ -74,14 +81,19 @@ export function authHandler(task: string, args: string[]) {
       break
 
     case 'test':
-      auth.authorize(email)
+      auth.testToken(email)
       break
 
-    case 'delete':
-      auth.authorize(email)
-      break
+    // case 'delete':
+    //   auth.authorize(email)
+    //   break
   
     default:
       return console.error(`Unknown task: '${task}'`)
   }
+}
+
+
+export function templateHandler() {
+  return
 }

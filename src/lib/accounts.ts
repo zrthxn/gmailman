@@ -1,20 +1,120 @@
 /**
  * @description
- * Contains functions to talk to GMail APIs and 
- * handles adding, deleting, authenticating and 
- * managing budgets on accounts.
+ * Handles adding and deleting accounts.
  */
 
-import os from 'os'
+import path from 'path'
 import fs from 'fs'
 
-const MAILDIR = '../../mail/'
+import { MAILDIR } from './cli'
 
-export function addAccount(email, credentials) {
-  console.log(__dirname)
-  return
+/**
+ * Read the GMailer config file
+ */
+export async function readConfigFile() {
+  try {
+    let data = fs.readFileSync(path.join(MAILDIR, 'gmailer.config.json'), { encoding: 'utf-8' })
+    return JSON.parse(data.toString())
+  } catch (error) {
+    console.error(error)
+    return Promise.reject(error)
+  }
 }
 
-export function deleteAccount(email) {
-  return
+/**
+ * Read credentials file for a given email
+ * @param email 
+ */
+export async function readCredentialsFile(email:string) {
+  let config = await readConfigFile()
+  
+  if(config.accounts[email].hasOwnProperty('credentials'))
+    try {
+      const cred = fs.readFileSync(config.accounts[email].credentials)
+      return JSON.parse(cred.toString())
+    } catch (error) {
+      return null
+    }
+  else
+    throw `No CREDENTIALS field associated with account '${email}' on registry.`
+}
+
+/**
+ * Read token file for a given email
+ * @param email 
+ */
+export async function readTokenFile(email:string) {
+  let config = await readConfigFile()
+  
+  if(config.accounts[email].hasOwnProperty('token'))
+    try {
+      const token = fs.readFileSync(config.accounts[email].token)
+      return JSON.parse(token.toString())
+    } catch (error) {
+      return null
+    }
+  else
+    throw `No TOKEN field associated with account '${email}' on registry.`
+}
+
+/**
+ * Adds email and credentials file to account registry 
+ * in the config file.
+ * @param email 
+ * @param credentials path of credentials file 
+ */
+export async function addAccount(email:string, credentials:string) {
+  if(process.env['VERBOSITY']=='true')
+    console.log('Creating account', email)
+  
+  try {
+    let config = await readConfigFile()
+    
+    fs.mkdirSync(path.join(MAILDIR, 'auth', email), { recursive: true })
+    fs.copyFileSync(path.resolve(credentials), path.join(MAILDIR, 'auth', email, credentials))
+
+    config.accounts[email] = {
+      userId: email,
+      createdOn: +new Date,
+      credentials: path.join(MAILDIR, 'auth', email, credentials)
+    }
+
+    fs.writeFileSync(path.join(MAILDIR, 'gmailer.config.json'), JSON.stringify(config, null, 2))
+    if(process.env['VERBOSITY']=='true') console.log('Done')
+    return
+  } catch (error) {
+    console.error(error)
+    throw `Invalid config dir path: '${MAILDIR}'`
+  }
+}
+
+/**
+ * Deletes email, credentials file and token file 
+ * from account registry.
+ * @param email Email to delete from registry
+ */
+export async function deleteAccount(email) {
+  if(process.env['VERBOSITY']=='true')
+    console.log('Deleting account', email)
+  
+  try {
+    let config = await readConfigFile()
+    
+    if(config.accounts[email].hasOwnProperty('credentials'))
+      fs.unlinkSync(config.accounts[email].credentials)
+
+    if(config.accounts[email].hasOwnProperty('token'))
+      fs.unlinkSync(config.accounts[email].token)
+
+    fs.rmdirSync(path.join(MAILDIR, 'auth', email), { recursive: true })
+
+    delete config.accounts[email]
+    fs.writeFileSync(path.join(MAILDIR, 'gmailer.config.json'), JSON.stringify(config, null, 2))
+
+    if(process.env['VERBOSITY']=='true') console.log('Done')
+    return
+  } catch (error) {
+    console.error(error)
+    throw `Invalid config dir path: '${MAILDIR}'`
+  }
 }
