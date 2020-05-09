@@ -17,13 +17,16 @@ import path from 'path'
  * Authorize with stored credentials file
  * @param email 
  */
-export async function authorize(email:string) {
+export async function authorize(email:string, type?:string) {
   const credentials = await readCredentialsFile(email)
-  try {
-    if(credentials.hasOwnProperty('installed'))
-      throw "Invalid credentials file."
 
-    const { client_secret, client_id, redirect_uris } = credentials.installed
+  if(!type) type = 'web'
+
+  try {
+    if(!credentials.hasOwnProperty(type))
+      throw 'Invalid credentials file.'
+
+    const { client_secret, client_id, redirect_uris } = credentials[type]
     const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0])
 
     const token = await readTokenFile(email)
@@ -54,7 +57,7 @@ export async function getNewToken(oAuth2Client:OAuth2Client, email:string, scope
 
   return new Promise((resolve:((client:OAuth2Client) => any), reject) => {
     rlx.question('Invalid or no token found. Generate new? (Y/N)...', (code) => {
-      if (code.toLowerCase()==='y' || code.toLowerCase()==='yes') {
+      if(code.toLowerCase()==='y' || code.toLowerCase()==='yes') {
         const authUrl = oAuth2Client.generateAuthUrl({
           access_type: 'offline',
           scope: SCOPES
@@ -75,6 +78,9 @@ export async function getNewToken(oAuth2Client:OAuth2Client, email:string, scope
               token: path.join(MAILDIR, 'auth', email, `token-${+new Date}.json`),
               authorizedOn: +new Date
             }
+            
+            fs.writeFileSync(path.join(MAILDIR, 'gmailer.config.json'), JSON.stringify(config, null, 2))
+            if(process.env['VERBOSITY']=='true') console.log('Done')
 
             fs.writeFile(config.accounts[email].token, JSON.stringify(token, null, 2), (err) => {
               if (err) return reject(err)

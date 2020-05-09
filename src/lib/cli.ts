@@ -51,7 +51,24 @@ switch (func) {
 export function accountHandler(task: string, args: string[]) {
   if(!args) return console.error('Too few arguments')
   
-  const [ email, credentials ] = args
+  var email, credentials
+  for (const arg of args) {
+    let [ label, value ] = arg.split('=')
+    switch (label) {
+      case '--email':
+        email = value
+        break
+
+      case '--credentials':
+        credentials = value
+        break
+    
+      default:
+        console.error(`Unrecognized argument: '${label}'`)
+        break
+    }
+  }
+
   switch (task) {
     case 'add':
       accounts.addAccount(email, credentials)
@@ -74,10 +91,27 @@ export function accountHandler(task: string, args: string[]) {
 export function authHandler(task: string, args: string[]) {
   if(!args) return console.error('Too few arguments')
 
-  const [ email ] = args
+  var type, email
+  for (const arg of args) {
+    let [ label, value ] = arg.split('=')
+    switch (label) {
+      case '--email':
+        email = value
+        break
+
+      case '--type':
+        type = value
+        break
+    
+      default:
+        console.error(`Unrecognized argument: '${label}'`)
+        break
+    }
+  }
+
   switch (task) {
     case 'token':
-      auth.authorize(email)
+      auth.authorize(email, type)
       break
 
     case 'test':

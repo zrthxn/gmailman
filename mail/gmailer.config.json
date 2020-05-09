@@ -1,9 +1,11 @@
 {
   "$schema": "",
   "accounts": {
-    
+    "zrthxn@gmail.com": {
+      "userId": "zrthxn@gmail.com",
+      "createdOn": 1589062606511,
+      "credentials": "/mnt/c/Users/User/Desktop/gmailer/mail/auth/zrthxn@gmail.com/credentials.json"
+    }
   },
-  "templates": {
-
-  }
+  "templates": {}
 }

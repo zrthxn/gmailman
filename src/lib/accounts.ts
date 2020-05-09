@@ -54,7 +54,7 @@ export async function readTokenFile(email:string) {
       return null
     }
   else
-    throw `No TOKEN field associated with account '${email}' on registry.`
+    return null
 }
 
 /**
@@ -71,12 +71,12 @@ export async function addAccount(email:string, credentials:string) {
     let config = await readConfigFile()
     
     fs.mkdirSync(path.join(MAILDIR, 'auth', email), { recursive: true })
-    fs.copyFileSync(path.resolve(credentials), path.join(MAILDIR, 'auth', email, credentials))
+    fs.copyFileSync(path.resolve(credentials), path.join(MAILDIR, 'auth', email, 'credentials.json'))
 
     config.accounts[email] = {
       userId: email,
       createdOn: +new Date,
-      credentials: path.join(MAILDIR, 'auth', email, credentials)
+      credentials: path.join(MAILDIR, 'auth', email, 'credentials.json')
     }
 
     fs.writeFileSync(path.join(MAILDIR, 'gmailer.config.json'), JSON.stringify(config, null, 2))

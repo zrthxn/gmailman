@@ -27,7 +27,8 @@
       ],
       "preLaunchTask": "npm: build",
       "program": "${workspaceFolder}\\src\\lib\\cli.ts",
-      "args": ["account", "add", "zrthxn@gmail.com", "./README.md"],
+      // "args": ["account", "add", "zrthxn@gmail.com", "./README.md"],
+      "args": ["authorize", "token", "--email=zrthxn@gmail.com", "--type=web"],
       "outputCapture": "std",
       "outFiles": [
         "${workspaceFolder}/build/**/*.js"
