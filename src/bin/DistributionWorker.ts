@@ -1,5 +1,5 @@
 import cluster from 'cluster'
-import mailer from './Gmailer'
+import mailer from './GMailer'
 
 interface order {
 	delay: number

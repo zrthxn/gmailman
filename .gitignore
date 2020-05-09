@@ -2,6 +2,9 @@
 node_modules/
 package-lock.json
 
+# Build
+build/
+
 # Auth related
 auth/
 .env

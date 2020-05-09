@@ -2,7 +2,7 @@ import os from 'os'
 import cluster from 'cluster'
 import { spawn, fork } from 'child_process'
 
-export function deployNewInstance (filename, count, payload, mode) {
+export default function deployNewInstance (filename, count, payload, mode) {
 	if(mode==='strict') {
 		if(payload.length !== count) 
 			throw "Payload count mismatch :: Load Balancer"

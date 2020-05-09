@@ -2,11 +2,11 @@ import fs from 'fs'
 import readline from 'readline'
 import { google } from 'googleapis'
 import { OAuth2Client } from 'googleapis-common'
-import { deployNewInstance } from './LoadBalancer'
+import deployNewInstance from './LoadBalancer'
 
 const GmailConfig = require('../../assets/config.json').gmailer
 
-export default class Gmailer {
+export default class GMailer {
 	readonly SCOPES = ['https://mail.google.com']
 
 	private readonly CREDENTIALS_PATH = './auth/credentials.json'
@@ -79,6 +79,18 @@ export default class Gmailer {
 		})
 	}
 
+	async TestGmailer() {
+		console.log('Testing GMail API')
+		try {
+			const auth = await this.authorize()
+			const testObj = google.sheets({version: 'v4', auth})
+			if (testObj!=null) return({ success: true })
+		} catch(err) {
+			console.error(err)
+			return Promise.reject({ success: false, errors: [err] })
+		}
+	}
+
 	private send(gmail, email:string, userId:string) {
 		// Takes in already encoded base 64 email
 		return new Promise((resolve, reject) => {
@@ -93,17 +105,6 @@ export default class Gmailer {
 			})
 		})
 	}
-
-	async TestGmailer() {
-		console.log('Testing GMail API')
-    try {
-      const auth = await this.authorize()
-      const testObj = google.sheets({version: 'v4', auth})
-      if (testObj!=null) return({ success: true })
-    } catch(err) {
-      return Promise.reject({ success: false, errors: err })
-    }
-  }
 
 	async SingleDelivery(mail:IEmail) {
 		//  if(typeof mail==='json') throw 'Invalid Types'
@@ -274,8 +275,8 @@ export default class Gmailer {
 			let INDEX = 0
 
 			for (const address of addressList) {
+				console.log('Sending email to ' + address)
 				if (address !== undefined) {
-					console.log('Sending email to ' + address)
 					try {
 						const res = await this.send(google.gmail({ version: 'v1', auth }), emails[INDEX], GmailConfig.userId)
 						INDEX++
@@ -320,7 +321,7 @@ export default class Gmailer {
 			})
 		}
 
-		deployNewInstance('./EmailDistributionWorker.ts', count, payload, 'free')
+		deployNewInstance('./DistributionWorker', count, payload, 'free')
 	}
 }
 
