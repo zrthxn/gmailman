@@ -31,7 +31,7 @@ export default class Gmailer {
 	private authorize() {
 		return new Promise((resolve:((client:OAuth2Client)=>any), reject) => {
 			fs.readFile(this.CREDENTIALS_PATH, (err, content) => {
-				if (err) return console.log('Error loading client secret file:', err)
+				if (err) return console.error('Error loading client secret file:', err)
 				
 				const credentials = JSON.parse(content.toString())
 				const { client_secret, client_id, redirect_uris } = credentials.installed

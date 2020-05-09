@@ -1,3 +1,7 @@
+# NPM Related
 node_modules/
+package-lock.json
+
+# Auth related
 auth/
 .env
