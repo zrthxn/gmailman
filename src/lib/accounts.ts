@@ -8,7 +8,10 @@
 import os from 'os'
 import fs from 'fs'
 
+const MAILDIR = '../../mail/'
+
 export function addAccount(email, credentials) {
+  console.log(__dirname)
   return
 }
 
