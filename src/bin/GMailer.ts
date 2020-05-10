@@ -3,6 +3,7 @@ import readline from 'readline'
 import { google } from 'googleapis'
 import { OAuth2Client } from 'googleapis-common'
 
+import { readTemplate } from './DataEncoder'
 import deployNewInstance from './LoadBalancer'
 import { authorize } from '../lib/auth'
 
@@ -11,15 +12,14 @@ import { authorize } from '../lib/auth'
  */
 export interface IEmail {
 	to: string //| string[]
-	cc: string | string[]
-	bcc: string | string[]
+	cc?: string | string[]
+	bcc?: string | string[]
 	from?: string
 	replyTo?: string
-	subject?: string
+	subject: string
 	body?: string
 }
 
-export type EmailContent = string
 export type EmailDatabase = string
 export type DataItem  = {
 	id: string
@@ -32,7 +32,7 @@ export type DataItem  = {
  */
 export default class GMailer {
 	readonly SCOPES = ['https://mail.google.com']	
-	readonly Head
+	readonly HEAD
 	readonly MultipartSepartor
 
 	private userId
@@ -40,9 +40,11 @@ export default class GMailer {
 	private authToken
 	private service
 
+	dataSeparator = /(\{\{\%|\%\}\})/g
+
 	constructor({ userId }) {
-		this.MultipartSepartor = `====X__multipart-000000${Date.now().toString(16)}__X====`
-		this.Head =
+		this.MultipartSepartor = `====X--multipart-000000${Date.now().toString(16)}--X====`
+		this.HEAD =
 			'Mime-Version: 1.0\r\n' +
 			'Content-Type: multipart/alternative; boundary=\"' + this.MultipartSepartor + '\"\r\n' +
 			'Content-Transfer-Encoding: binary\r\n' +
@@ -81,28 +83,43 @@ export default class GMailer {
 		})
 	}
 
-	private base64Encode(raw) {
-		return Buffer.from(raw + '\r\n--' + this.MultipartSepartor + '--\r\n')
+	private interpolateHeaders(mail:IEmail) {
+		if(!mail.from)
+			mail.from = this.userId
+		mail.from = `From: ${this.username} <${mail.from}>\r\n`
+
+		if(mail.to==='me')
+			mail.to = this.userId
+		mail.to = `To: ${mail.to}\r\n`
+		
+		try {
+			mail.subject = `Subject: ${mail.body.split('<title>')[1].split('</title>')[0]}\r\n`
+		} catch(ErrorNoTitle) {
+			mail.subject = `Subject: ${mail.subject}\r\n`
+		}
+		
+		const contentLength = `Content-Length: ${mail.body.length}\r\n`
+		const HEADERS = this.HEAD + 
+			contentLength +
+			mail.from + 
+			mail.to + 
+			mail.subject + 
+			'\r\n\r\n'
+
+		return HEADERS
+	}
+
+	private base64Encode(headers, body) {
+		return Buffer.from(headers + body + '\r\n--' + this.MultipartSepartor + '--\r\n')
 			.toString('base64')
 			.replace(/\+/g, '-')
 			.replace(/\//g, '_')
 			.replace(/=+$/, '')
 	}
 
-	async SingleDelivery(mail:IEmail) {
-		const headers = this.Head + 'Content-Length: ' + mail.body.length + '\r\n\r\n'
-
-		if (mail.replyTo)
-			var reply = 'Reply-To: ' + mail.replyTo + '\r\n'
-
-		const from = 'From: ' + this.username + ' <' + mail.from + '>\r\n'
-
-		if(mail.to==='me') 
-			mail.to = this.userId
-		const to = 'To: ' + mail.to + '\r\n'
-		const subject = 'Subject: ' + mail.subject + '\r\n'
-		
-		const mail64 = this.base64Encode(from + to + reply + subject + headers + mail.body)
+	async SingleDelivery(mail:IEmail, template?:string) {
+		const headers = this.interpolateHeaders(mail)		
+		const mail64 = this.base64Encode(headers, mail.body)
 
 		console.log('Sending email to', mail.to)
 		try {
@@ -116,47 +133,19 @@ export default class GMailer {
 		}		
 	}
 
-	async SingleDataDelivery(mail:IEmail, content:EmailContent, data:DataItem[]) {
-		var splits = content.split('$')
-		var peices = [], identifiers = []
-
-		var mail64 = null
-
-		// ----- EMAIL CONTENT FORMATTING ----- 
-		// Put Address identifiers and surrounding text in arrays
-		for(let p=0; p<=splits.length; p+=2)
-			peices.push(splits[p])
-		for(let a=1; a<splits.length; a+=2)
-			identifiers.push(splits[a])
-
-		let current_email = String()
-		// Insert data into email block copy
-		for(var j=0; j<peices.length; j++) {
-			let _data = '';
-			for(var k=0; k<data.length; k++)
-				if(identifiers[j]===data[k].id) {
-					_data = data[k].data
-					break
-				}
-			let next = peices[j] + _data
-			current_email += next
+	async SingleDataDelivery(mail:IEmail, data:DataItem[], template?:string) {
+		if(template)
+			mail.body = readTemplate(template)
+		if(!mail.body) throw 'Neither body nor template provided'
+		
+		for (const entry of data) {
+			const find = new RegExp(`\{\{ \(${entry.id}\) \}\}`, 'gi')
+			mail.body = mail.body.replace(find, entry.data)
 		}
-		
-		const headers = this.Head + 'Content-Length: '+ current_email.length +'\r\n\r\n'
 
-		if(mail.to==='me') mail.to = this.userId
-		const to = 'To: ' + mail.to + '\r\n'
-		const from = 'From: '+ this.username + ' <' + mail.from + '>\r\n'
-		
-		try {
-			var dyn_sub = current_email.split('<title>')[1].split('</title>')[0]
-		} catch(ErrorNoTitle) {
-			dyn_sub = mail.subject
-		}
-		
-		const subject = 'Subject: ' + dyn_sub + '\r\n'
-		mail64 = this.base64Encode(from + to + subject + headers + current_email)
-			
+		const headers = this.interpolateHeaders(mail)
+		const mail64 = this.base64Encode(headers, mail.body)
+
 		console.log('Sending email to ' + mail.to)
 		try {
 			const res = await this.send(mail64)
@@ -169,7 +158,7 @@ export default class GMailer {
 		}
 	}
 
-	async DatasetDelivery(mail:IEmail, content:EmailContent, database:EmailDatabase) {
+	async DatasetDelivery(mail:IEmail, database:EmailDatabase, template?:string) {
 		let data = [], addressList = []
 		let raw = database.split('\r\n')
 		let heads = raw[0].split(',')
@@ -190,14 +179,14 @@ export default class GMailer {
 		}
 
 		// ----- EMAIL CONTENT FORMATTING ----- 
-		var splits = content.split('$')
+		var splits = template.split(this.dataSeparator)
 		var emails = [], peices = [], identifiers = []
 
 		// Put Address identifiers and surrounding text in arrays
 		for (let p = 0; p <= splits.length; p += 2)
 			peices.push(splits[p])
 		for (let a = 1; a < splits.length; a += 2)
-			identifiers.push(splits[a])
+			identifiers.push(splits[a].trim())
 
 		// Itrate over the entire data
 		for (let i = 0; i < data.length; i++) {
@@ -214,7 +203,7 @@ export default class GMailer {
 				current_email = current_email + next
 			}
 
-			const headers = this.Head + 'Content-Length: ' + current_email.length + '\r\n\r\n'
+			// const headers = this.Head + 'Content-Length: ' + current_email.length + '\r\n\r\n'
 
 			if(addressList[i]==='me') addressList[i] = this.userId
 			const to = 'To: ' + addressList[i] + '\r\n'
@@ -227,8 +216,10 @@ export default class GMailer {
 			}
 
 			const subject = 'Subject: ' + dyn_sub + '\r\n'
+
+			const headers = this.interpolateHeaders(mail)
 			emails.push(
-				this.base64Encode(from + to + subject + headers + current_email)
+				this.base64Encode(headers, current_email)
 			)
 		}
 
@@ -261,7 +252,7 @@ export default class GMailer {
 		}
 	}
 
-	DistributedCampaign = function (mail:IEmail, content:EmailContent, database:EmailDatabase, options?) {
+	DistributedCampaign = function (mail:IEmail, content:string, database:EmailDatabase, options?) {
 		const MAX_DATA = 50
 
 		let payload = []

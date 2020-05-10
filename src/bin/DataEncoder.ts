@@ -3,10 +3,24 @@
  * Formatting, templating, data interpolation and attachments
  */
 
+import fs from 'fs'
+import path from 'path'
+
+import { MAILDIR } from '../lib/cli'
 import { DataItem } from './GMailer'
 
-function template() {
-  
+/**
+ * Read template by file name
+ * @param template Template filename
+ */
+export function readTemplate(template:string) {
+  try {
+    let data = fs.readFileSync(path.join(MAILDIR, 'templates', template))
+    return data.toString()
+  } catch (error) {
+    console.error(error)
+    return null
+  }
 }
 
 function interpolation(content, mail, data:DataItem[]) {
@@ -51,5 +65,9 @@ function interpolation(content, mail, data:DataItem[]) {
 }
 
 function attachment() {
+
+}
+
+function database() {
 
 }

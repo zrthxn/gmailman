@@ -1,14 +1,14 @@
 import cluster from 'cluster'
-import mailer from './GMailer'
+import GMailer from './GMailer'
 
 interface order {
 	delay: number
 }
 
-const Gmailer = new mailer()
+const mail = new GMailer({ userId: 'zrthxn@gmail.com' })
 process.on('message', (order)=>{
 	setTimeout(function startInstance(){
-		Gmailer.DatasetDelivery(order.payload.mail, order.payload.content, order.payload.data)
+		mail.DatasetDelivery(order.payload.mail, order.payload.content, order.payload.data)
 			.then(()=>{
 				process.send({ pid: order.pid, complete: true, errors: [] })
 			})
