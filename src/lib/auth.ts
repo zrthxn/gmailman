@@ -19,9 +19,8 @@ import path from 'path'
  */
 export async function authorize(email:string, type?:string) {
   const credentials = await readCredentialsFile(email)
-
   if(!type) type = 'web'
-
+  
   try {
     if(!credentials.hasOwnProperty(type))
       throw 'Invalid credentials file.'
@@ -33,7 +32,7 @@ export async function authorize(email:string, type?:string) {
     if(!token)
       return await getNewToken(oAuth2Client, email)
     else {
-      oAuth2Client.setCredentials(JSON.parse(<string><unknown>token))
+      oAuth2Client.setCredentials(token)
       return oAuth2Client
     }
   } catch (error) {

@@ -32,7 +32,7 @@ export type DataItem  = {
  */
 export default class GMailer {
 	readonly SCOPES = ['https://mail.google.com']	
-	readonly HEAD
+	readonly ContentHeaders
 	readonly MultipartSepartor
 
 	private userId
@@ -43,8 +43,8 @@ export default class GMailer {
 	dataSeparator = /(\{\{\%|\%\}\})/g
 
 	constructor({ userId }) {
-		this.MultipartSepartor = `====X--multipart-000000${Date.now().toString(16)}--X====`
-		this.HEAD =
+		this.MultipartSepartor = `multipart-000000${(+new Date).toString(16)}`
+		this.ContentHeaders =
 			'Mime-Version: 1.0\r\n' +
 			'Content-Type: multipart/alternative; boundary=\"' + this.MultipartSepartor + '\"\r\n' +
 			'Content-Transfer-Encoding: binary\r\n' +
@@ -55,25 +55,29 @@ export default class GMailer {
 			'Content-Disposition: inline\r\n'
 
 		this.userId = userId
-		authorize(this.userId).then((token)=>{
-			this.authToken = token
-			this.service = google.gmail({ 
-				version: 'v1', 
-				auth: this.authToken
-			})
+	}
+
+	private async getAuthToken() {
+		this.authToken = await authorize(this.userId, 'installed')
+		this.service = google.gmail({ 
+			version: 'v1', 
+			auth: this.authToken
 		})
 	}
 
 	private send(email64:string) {
 		// Takes in already encoded base 64 email
-		return new Promise((resolve, reject) => {
+		return new Promise(async (resolve, reject) => {
+			if(!this.service)
+				await this.getAuthToken()
+
 			this.service.users.messages.send({
 				userId: this.userId,
 				resource: {
 					raw: email64
 				}
 			}, (err, res) => {
-				if(err) reject(err.errors[0])
+				if(err) return reject(err.errors)
 
 				if(res.status===200) 
 					resolve(res.status)
@@ -86,25 +90,26 @@ export default class GMailer {
 	private interpolateHeaders(mail:IEmail) {
 		if(!mail.from)
 			mail.from = this.userId
-		mail.from = `From: ${this.username} <${mail.from}>\r\n`
 
 		if(mail.to==='me')
 			mail.to = this.userId
-		mail.to = `To: ${mail.to}\r\n`
+
+		if(!mail.replyTo)
+			mail.replyTo = mail.from
 		
 		try {
-			mail.subject = `Subject: ${mail.body.split('<title>')[1].split('</title>')[0]}\r\n`
+			mail.subject = mail.body.split('<title>')[1].split('</title>')[0]
 		} catch(ErrorNoTitle) {
-			mail.subject = `Subject: ${mail.subject}\r\n`
+			mail.subject = mail.subject
 		}
 		
-		const contentLength = `Content-Length: ${mail.body.length}\r\n`
-		const HEADERS = this.HEAD + 
-			contentLength +
-			mail.from + 
-			mail.to + 
-			mail.subject + 
-			'\r\n\r\n'
+		const HEADERS = 
+			`From: <${mail.from}>\r\n` + //`From: ${this.username} <${mail.from}>\r\n`
+			`Date: ${(new Date()).toString()}\r\n` +
+			`Subject: ${mail.subject}\r\n` +
+			`To: ${mail.to}\r\n` +
+			`Reply-To: ${mail.replyTo}\r\n` +
+			this.ContentHeaders + `Content-Length: ${mail.body.length}\r\n\r\n`
 
 		return HEADERS
 	}
@@ -121,7 +126,7 @@ export default class GMailer {
 		const headers = this.interpolateHeaders(mail)		
 		const mail64 = this.base64Encode(headers, mail.body)
 
-		console.log('Sending email to', mail.to)
+		console.log('Sending email', mail.to)
 		try {
 			const res = await this.send(mail64)
 			if(res === 200)
@@ -146,7 +151,7 @@ export default class GMailer {
 		const headers = this.interpolateHeaders(mail)
 		const mail64 = this.base64Encode(headers, mail.body)
 
-		console.log('Sending email to ' + mail.to)
+		console.log('Sending email', mail.to)
 		try {
 			const res = await this.send(mail64)
 			if(res===200) 
