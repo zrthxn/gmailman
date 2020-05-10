@@ -23,6 +23,40 @@ export function readTemplate(template:string) {
   }
 }
 
+/**
+ * Read CSV and 
+ * @param filepath Path of CSV file
+ */
+export function readCSV(filepath:string) {
+  try {
+    let database = fs.readFileSync(path.resolve(filepath))
+    
+    let data = [], addressList = []
+    let raw = database.toString().split('\r\n')
+		let heads = raw[0].split(',')
+
+		// ----- EMAIL ADDRESS EXTRACTION -----
+		for (let row = 1; row < raw.length; row++) {
+			let row_entry = []
+			for (let col = 0; col < heads.length; col++)
+				if (heads[col].toLowerCase()==='email')
+					addressList.push(raw[row].split(',')[col])
+				else {
+					row_entry.push({
+						id: heads[col],
+						data: raw[row].split(',')[col]
+					})
+				}
+			data.push(row_entry)
+		}
+
+    return [ data, addressList ]
+  } catch (error) {
+    console.error(error)
+    return null
+  }
+}
+
 function interpolation(content, mail, data:DataItem[]) {
   var splits = content.split('$')
   var peices = [], identifiers = []
