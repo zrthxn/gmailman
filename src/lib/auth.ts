@@ -15,11 +15,10 @@ import path from 'path'
 
 /**
  * Authorize with stored credentials file
- * @param email 
+ * @param userId The userId (email) to use to authorize 
  */
-export async function authorize(email:string, type?:string) {
-  const credentials = await readCredentialsFile(email)
-  if(!type) type = 'web'
+export async function authorize(userId:string, type:string = 'installed') {
+  const credentials = await readCredentialsFile(userId)
   
   try {
     if(!credentials.hasOwnProperty(type))
@@ -28,9 +27,9 @@ export async function authorize(email:string, type?:string) {
     const { client_secret, client_id, redirect_uris } = credentials[type]
     const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0])
 
-    const token = await readTokenFile(email)
+    const token = await readTokenFile(userId)
     if(!token)
-      return await getNewToken(oAuth2Client, email)
+      return await getNewToken(oAuth2Client, userId)
     else {
       oAuth2Client.setCredentials(token)
       return oAuth2Client
@@ -44,10 +43,10 @@ export async function authorize(email:string, type?:string) {
 /**
  * Generate a new token file
  * @param oAuth2Client Client with set credentials
- * @param email UserID
+ * @param userId UserID
  * @param scopes Google scopes
  */
-export async function getNewToken(oAuth2Client:OAuth2Client, email:string, scopes?:string[]) {
+export async function getNewToken(oAuth2Client:OAuth2Client, userId:string, scopes?:string[]) {
   var SCOPES = ['https://mail.google.com']
   if(scopes)
     SCOPES = scopes
@@ -73,17 +72,17 @@ export async function getNewToken(oAuth2Client:OAuth2Client, email:string, scope
             oAuth2Client.setCredentials(token)
 
             let config = await readConfigFile()
-            config.accounts[email] = {
-              token: path.join(MAILDIR, 'auth', email, `token-${+new Date}.json`),
+            config.accounts[userId] = {
+              token: path.join(MAILDIR, 'auth', userId, `token-${+new Date}.json`),
               expiresOn: token.expiry_date
             }
             
             fs.writeFileSync(path.join(MAILDIR, 'gmailer.config.json'), JSON.stringify(config, null, 2))
             if(process.env['VERBOSITY']=='true') console.log('Done')
 
-            fs.writeFile(config.accounts[email].token, JSON.stringify(token, null, 2), (err) => {
+            fs.writeFile(config.accounts[userId].token, JSON.stringify(token, null, 2), (err) => {
               if (err) return reject(err)
-              console.log('\tToken stored to', config.accounts[email].token)
+              console.log('\tToken stored to', config.accounts[userId].token)
               resolve(oAuth2Client)
             })
           })
@@ -96,10 +95,10 @@ export async function getNewToken(oAuth2Client:OAuth2Client, email:string, scope
 /**
  * Test stored token by authorizing with credentials
  */
-export async function testToken(email:string) {
+export async function testToken(userId:string) {
   console.log('Testing GMail API')
   try {
-    const auth = await authorize(email)
+    const auth = await authorize(userId)
     const testObj = google.gmail({ version: 'v1', auth })
     
     if (!testObj) 

@@ -1,44 +1,31 @@
-import fs from 'fs'
-import readline from 'readline'
-import { google } from 'googleapis'
+import { google, gmail_v1 } from 'googleapis'
 import { OAuth2Client } from 'googleapis-common'
 
 import { readTemplate, readCSV } from './DataEncoder'
 import deployNewInstance from './LoadBalancer'
 import { authorize } from '../lib/auth'
 
-/**
- * Interfaces
- */
-export interface IEmail {
-	to: string //| string[]
-	cc?: string | string[]
-	bcc?: string | string[]
-	from?: string
-	replyTo?: string
-	subject: string
-	body?: string
-}
-
-export type Database = DataItem[]
-export type DataItem  = {
-	id: string
-	data: string
-}
+import { Email, DataItem, Database, DeliveryOptions } from '../index.d'
+import { GaxiosResponse } from 'gaxios'
 
 /**
+ * Class object for mailer object authorized with single email.
+ * Initialize the class with the userID (email) of the account to use.
+ * Call functions on an object of this class to send mails.
+ * 
  * @description
  * `class` Gmailer
  */
-export default class GMailer {
+export default class GMailer<ApplicationType> {
 	readonly SCOPES = ['https://mail.google.com']	
 	readonly ContentHeaders
 	readonly MultipartSepartor
 
 	private userId
 	private username
-	private authToken
-	private service
+
+	private authClient: OAuth2Client | null
+	private service: gmail_v1.Gmail
 
 	dataSeparator = /(\{\{\%|\%\}\})/g
 
@@ -61,58 +48,48 @@ export default class GMailer {
 		this.userId = userId
 	}
 
-	private async getAuthToken() {
-		this.authToken = await authorize(this.userId, 'installed')
+	/**
+	 * Create a new OAuth2 client from the stored token and
+	 * initialize the service.
+	 * @param type Type of application (as in credentials)
+	 */
+	private async getAuthClient(type:string = 'installed') {
+		console.log('Authorizing', type, 'application, GET OAuth2 Token')
+		this.authClient = await authorize(this.userId, type)
 		this.service = google.gmail({ 
 			version: 'v1', 
-			auth: this.authToken
+			auth: this.authClient
 		})
 	}
 
-	private send(email64:string) {
+	/**
+	 * Send email using service
+	 * @param email64 Base64 encoded email in RFC822 format
+	 */
+	private async send(email64:string): Promise<GaxiosResponse<gmail_v1.Schema$Message>> {
 		// Takes in already encoded base 64 email
-		return new Promise(async (resolve, reject) => {
-			if(!this.service)
-				await this.getAuthToken()
+		if(!this.service) await this.getAuthClient()
 
-			this.service.users.messages.send({
+		try {
+			let res = await this.service.users.messages.send({
 				userId: this.userId,
-				resource: {
+				requestBody: {
 					raw: email64
 				}
-			}, (err, res) => {
-				if(err) return reject(err.errors)
-
-				if(res.status===200) 
-					resolve(res.status)
-				else
-					reject(res.status)
 			})
-		})
-	}
 
-	private async sendQueue() {
-		for (const mail64 of this.MAIL64_QUEUE) {
-			if(!this.service)
-				await this.getAuthToken()
-
-			this.service.users.messages.send({
-				userId: this.userId,
-				resource: {
-					raw: mail64
-				}
-			}, (err, res) => {
-				// if(err) return reject(err.errors)
-
-				// if(res.status===200) 
-				// 	resolve(res.status)
-				// else
-				// 	reject(res.status)
-			})
+			return res
+		} catch (errors) {
+			console.error(errors)
+			return Promise.reject(errors)
 		}
 	}
 
-	private interpolateHeaders(mail:IEmail) {
+	/**
+	 * Genetate email headers according to RFC822 spec
+	 * @param mail Mail object
+	 */
+	private interpolateHeaders(mail:Email): string {
 		if(!mail.from)
 			mail.from = this.userId
 
@@ -129,7 +106,7 @@ export default class GMailer {
 		}
 		
 		const HEADERS = 
-			`From: <${mail.from}>\r\n` + //`From: ${this.username} <${mail.from}>\r\n`
+			`From: ${mail.from}\r\n` + //`From: ${this.username} <${mail.from}>\r\n`
 			`Date: ${(new Date()).toString()}\r\n` +
 			`Subject: ${mail.subject}\r\n` +
 			`To: ${mail.to}\r\n` +
@@ -139,7 +116,7 @@ export default class GMailer {
 		return HEADERS
 	}
 
-	private base64Encode(headers, body) {
+	private base64Encode(headers, body): string {
 		return Buffer.from(headers + body + '\r\n--' + this.MultipartSepartor + '--\r\n')
 			.toString('base64')
 			.replace(/\+/g, '-')
@@ -147,26 +124,45 @@ export default class GMailer {
 			.replace(/=+$/, '')
 	}
 
-	async SingleDelivery(mail:IEmail, template?:string) {
+	/**
+	 * Deliver a single static email
+	 * @param mail 
+	 * @param template 
+	 */
+	async SingleDelivery(mail:Email, template?:string, options?:DeliveryOptions) {
+		if(template)
+			mail.body = await readTemplate(template)
+		if(!mail.body) 
+			throw 'Neither body nor template provided'
+
 		const headers = this.interpolateHeaders(mail)		
 		const mail64 = this.base64Encode(headers, mail.body)
-
-		console.log('Sending email', mail.to)
+		
+		if(options && !options.quiet)
+			console.log('Sending email', mail.to)
 		try {
-			const res = await this.send(mail64)
-			if(res === 200)
-				return res
-			else throw "Unsuccessful sending"
+			const { status } = await this.send(mail64)
+			if(status===200)
+				return
+			else 
+				throw `Unsuccessful sending to ${mail.to}`
 		} catch (error) {
 			console.error(error)
 			return Promise.reject(error)
 		}		
 	}
 
-	async SingleDataDelivery(mail:IEmail, data:DataItem[], template?:string) {
+	/**
+	 * Deliver a single email with data interpolation
+	 * @param mail `Email` object
+	 * @param data `DataItem` object
+	 * @param template Name of template
+	 */
+	async SingleDataDelivery(mail:Email, data:DataItem[], template?:string, options?:DeliveryOptions) {
 		if(template)
-			mail.body = readTemplate(template)
-		if(!mail.body) throw 'Neither body nor template provided'
+			mail.body = await readTemplate(template)
+		if(!mail.body) 
+			throw 'Neither body nor template provided'
 		
 		for (const entry of data) {
 			const find = new RegExp(`\{\{ \(${entry.id}\) \}\}`, 'gi')
@@ -176,25 +172,34 @@ export default class GMailer {
 		const headers = this.interpolateHeaders(mail)
 		const mail64 = this.base64Encode(headers, mail.body)
 
-		console.log('Sending email', mail.to)
+		if(options && !options.quiet)
+			console.log('Sending email', mail.to)
 		try {
-			const res = await this.send(mail64)
-			if(res===200) 
-				return res
-			else throw "Unsuccessful sending"
+			const { status } = await this.send(mail64)
+			if(status===200)
+				return
+			else 
+				throw `Unsuccessful sending to ${mail.to}`
 		} catch (error) {
 			console.error(error)
 			return Promise.reject(error)
 		}
 	}
 
-	async DatasetDelivery(mail:IEmail, dataPath:string, template?:string) {
-		let [data, addressList] = readCSV(dataPath)
-		let mail_queue = []
+	/**
+	 * Deliver multiple emails with data interpolation
+	 * @param mail `Email` object
+	 * @param dataPath Path of CSV file to read data from
+	 * @param template Name of template
+	 */
+	async DatasetDelivery(mail:Email, dataPath:string, template?:string, options?:DeliveryOptions) {
+		let [data, addressList] = await readCSV(dataPath)
+		let MailQueue = []
 
 		if(template)
-			mail.body = readTemplate(template)
-		if(!mail.body) throw 'Neither body nor template provided'
+			mail.body = await readTemplate(template)
+		if(!mail.body) 
+			throw 'Neither body nor template provided'
 
 		for (const recipient of data) {
 			var send = mail
@@ -204,39 +209,66 @@ export default class GMailer {
 			}
 
 			const headers = this.interpolateHeaders(send)
-			mail_queue.push(
+			MailQueue.push(
 				this.base64Encode(headers, send)
 			)
 		}
 
-		try {
-			let index = 0
-			for (const address of addressList) {
-				console.log('Sending email to ' + address)
-				if (address !== undefined) {
-					try {
-						const res = await this.send(mail_queue[index])
-						index++
-						if (res === 200) {
-							if (index < mail_queue.length)
-								continue
-							else 
-								return
-						}	
-						else throw `Unsuccessful sending to ${address}`
-					} catch (error) {
-						console.error(error)
-					}					
-				} 
-				else
-					console.log('Invalid Data Row ::', index)
+		let failAddressList = [], FailQueue = []
+		let retryCount = options.retryCount || 0
+		if(!options.retryFailed)
+			retryCount = 0
+
+		do {
+			try {
+				let index = 0
+				for (const address of addressList) {
+					if(options && !options.quiet)
+						console.log('Sending email to', address)
+					if (address) {
+						try {
+							const { status } = await this.send(MailQueue[index])
+							index++
+							if (status===200) {
+								if (index < MailQueue.length)
+									continue
+								else 
+									return 
+							}
+							else {
+								FailQueue.push(MailQueue[index])
+								failAddressList.push(address)
+								throw `Unsuccessful sending to ${address}`
+							}
+						} catch (error) {
+							console.error(error)
+						}
+					} 
+					else
+						if(options && !options.quiet)
+							console.error(`Invalid row ${index}: No email address provided` )
+				}
+			} catch (error) {
+				console.error(error)
 			}
-		} catch (error) {
-			console.error(error)
-		}
+
+			if(options.retryFailed) {
+				retryCount--
+				MailQueue = FailQueue
+				addressList = failAddressList
+				if(options && !options.quiet)
+					console.log(`[${retryCount}] Retrying ${addressList.length} mails`)
+			}	
+		} while (retryCount>=0);
 	}
 
-	DistributedCampaign = function (mail:IEmail, content:string, database:Database, options?) {
+	/**
+	 * Distrubuted `TODO`
+	 * @param mail `Email` object
+	 * @param content 
+	 * @param database 
+	 */
+	async DistributedCampaign(mail:Email, content:string, database:Database) {
 		const MAX_DATA = 50
 
 		let payload = []
@@ -247,15 +279,11 @@ export default class GMailer {
 		for (let i = 0; i < count; i++) {
 			let data = String()
 			for (let j = MAX_DATA * i + 1; j <= (i + 1) * MAX_DATA; j++) {
-				if (data_rows[j] === undefined) break
+				if (!data_rows[j]) break
 				data += ('\r\n' + data_rows[j])
 			}
 
-			payload.push({
-				mail: mail,
-				content: content,
-				data: head + data
-			})
+			payload.push({ mail, content, data: head + data })
 		}
 
 		deployNewInstance('./DistributionWorker', count, payload, 'free')

@@ -23,32 +23,32 @@ export async function readConfigFile() {
 
 /**
  * Read credentials file for a given email
- * @param email 
+ * @param userId 
  */
-export async function readCredentialsFile(email:string) {
+export async function readCredentialsFile(userId:string) {
   let config = await readConfigFile()
   
-  if(config.accounts[email].hasOwnProperty('credentials'))
+  if(config.accounts[userId].hasOwnProperty('credentials'))
     try {
-      const cred = fs.readFileSync(config.accounts[email].credentials)
+      const cred = fs.readFileSync(config.accounts[userId].credentials)
       return JSON.parse(cred.toString())
     } catch (error) {
       return null
     }
   else
-    throw `No CREDENTIALS field associated with account '${email}' on registry.`
+    throw `No CREDENTIALS field associated with account '${userId}' on registry.`
 }
 
 /**
  * Read token file for a given email
- * @param email 
+ * @param userId 
  */
-export async function readTokenFile(email:string) {
+export async function readTokenFile(userId:string) {
   let config = await readConfigFile()
   
-  if(config.accounts[email].hasOwnProperty('token'))
+  if(config.accounts[userId].hasOwnProperty('token'))
     try {
-      const token = fs.readFileSync(config.accounts[email].token)
+      const token = fs.readFileSync(config.accounts[userId].token)
       return JSON.parse(token.toString())
     } catch (error) {
       return null
@@ -60,23 +60,23 @@ export async function readTokenFile(email:string) {
 /**
  * Adds email and credentials file to account registry 
  * in the config file.
- * @param email 
+ * @param userId 
  * @param credentials path of credentials file 
  */
-export async function addAccount(email:string, credentials:string) {
+export async function addAccount(userId:string, credentials:string) {
   if(process.env['VERBOSITY']=='true')
-    console.log('Creating account', email)
+    console.log('Creating account', userId)
   
   try {
     let config = await readConfigFile()
     
-    fs.mkdirSync(path.join(MAILDIR, 'auth', email), { recursive: true })
-    fs.copyFileSync(path.resolve(credentials), path.join(MAILDIR, 'auth', email, 'credentials.json'))
+    fs.mkdirSync(path.join(MAILDIR, 'auth', userId), { recursive: true })
+    fs.copyFileSync(path.resolve(credentials), path.join(MAILDIR, 'auth', userId, 'credentials.json'))
 
-    config.accounts[email] = {
-      userId: email,
+    config.accounts[userId] = {
+      userId: userId,
       createdOn: +new Date,
-      credentials: path.join(MAILDIR, 'auth', email, 'credentials.json')
+      credentials: path.join(MAILDIR, 'auth', userId, 'credentials.json')
     }
 
     fs.writeFileSync(path.join(MAILDIR, 'gmailer.config.json'), JSON.stringify(config, null, 2))
@@ -93,22 +93,22 @@ export async function addAccount(email:string, credentials:string) {
  * from account registry.
  * @param email Email to delete from registry
  */
-export async function deleteAccount(email) {
+export async function deleteAccount(userId) {
   if(process.env['VERBOSITY']=='true')
-    console.log('Deleting account', email)
+    console.log('Deleting account', userId)
   
   try {
     let config = await readConfigFile()
     
-    if(config.accounts[email].hasOwnProperty('credentials'))
-      fs.unlinkSync(config.accounts[email].credentials)
+    if(config.accounts[userId].hasOwnProperty('credentials'))
+      fs.unlinkSync(config.accounts[userId].credentials)
 
-    if(config.accounts[email].hasOwnProperty('token'))
-      fs.unlinkSync(config.accounts[email].token)
+    if(config.accounts[userId].hasOwnProperty('token'))
+      fs.unlinkSync(config.accounts[userId].token)
 
-    fs.rmdirSync(path.join(MAILDIR, 'auth', email), { recursive: true })
+    fs.rmdirSync(path.join(MAILDIR, 'auth', userId), { recursive: true })
 
-    delete config.accounts[email]
+    delete config.accounts[userId]
     fs.writeFileSync(path.join(MAILDIR, 'gmailer.config.json'), JSON.stringify(config, null, 2))
 
     if(process.env['VERBOSITY']=='true') console.log('Done')
