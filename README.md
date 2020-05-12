@@ -5,9 +5,9 @@ A lightweight and secure library for easily sending emails using Gmail SMTP serv
 
 ### To Do
 
-- [*] Port over to TS
-- [*] Remove callback hell, move to Promises
-- [*] Use ES7 syntax for promises
+- [x] Port over to TS
+- [x] Remove callback hell, move to Promises
+- [x] Use ES7 syntax for promises
 - [ ] Complete the CLI
 - [ ] Add support for attachments
 - [ ] Write tests
