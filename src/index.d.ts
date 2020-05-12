@@ -1,15 +1,34 @@
-interface IEmail {
-	to: string
+/**
+ * @description Interfaces
+ */
+
+/**
+ * @description Email object interface
+ */
+export interface Email {
+	to: string //| string[]
+	cc?: string | string[]
+	bcc?: string | string[]
 	from?: string
 	replyTo?: string
-	subject?: string
+	subject: string
 	body?: string
 }
 
-interface DataItem {
+/**
+ * Data Items
+ */
+export type DataItem  = {
 	id: string
 	data: string
 }
+export type Database = DataItem[]
 
-type EmailContent = string
-type EmailDatabase = string
+/**
+ * Delivery Options
+ */
+export interface DeliveryOptions {
+	quiet?: boolean
+	retryFailed?: boolean
+	retryCount?: number
+}
