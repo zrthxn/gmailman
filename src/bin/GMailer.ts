@@ -16,7 +16,7 @@ import { GaxiosResponse } from 'gaxios'
  * @description
  * `class` Gmailer
  */
-export default class GMailer<ApplicationType> {
+export default class GMailer {
 	readonly SCOPES = ['https://mail.google.com']	
 	readonly ContentHeaders
 	readonly MultipartSepartor
@@ -27,13 +27,7 @@ export default class GMailer<ApplicationType> {
 	private authClient: OAuth2Client | null
 	private service: gmail_v1.Gmail
 
-	dataSeparator = /(\{\{\%|\%\}\})/g
-
-	private MAIL64_QUEUE = [
-
-	]
-
-	constructor({ userId }) {
+	constructor({ userId, username }) {
 		this.MultipartSepartor = `multipart-000000${(+new Date).toString(16)}`
 		this.ContentHeaders =
 			'Mime-Version: 1.0\r\n' +
@@ -46,6 +40,7 @@ export default class GMailer<ApplicationType> {
 			'Content-Disposition: inline\r\n'
 
 		this.userId = userId
+		this.username = username
 	}
 
 	/**
@@ -106,7 +101,7 @@ export default class GMailer<ApplicationType> {
 		}
 		
 		const HEADERS = 
-			`From: ${mail.from}\r\n` + //`From: ${this.username} <${mail.from}>\r\n`
+			`From: "${this.username}" <${mail.from}>\r\n` +
 			`Date: ${(new Date()).toString()}\r\n` +
 			`Subject: ${mail.subject}\r\n` +
 			`To: ${mail.to}\r\n` +

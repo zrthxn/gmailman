@@ -63,7 +63,7 @@ export async function readTokenFile(userId:string) {
  * @param userId 
  * @param credentials path of credentials file 
  */
-export async function addAccount(userId:string, credentials:string) {
+export async function addAccount(userId:string, credentials:string, username?:string) {
   if(process.env['VERBOSITY']=='true')
     console.log('Creating account', userId)
   
@@ -75,8 +75,9 @@ export async function addAccount(userId:string, credentials:string) {
 
     config.accounts[userId] = {
       userId: userId,
+      credentials: path.join(MAILDIR, 'auth', userId, 'credentials.json'),
       createdOn: +new Date,
-      credentials: path.join(MAILDIR, 'auth', userId, 'credentials.json')
+      username
     }
 
     fs.writeFileSync(path.join(MAILDIR, 'gmailer.config.json'), JSON.stringify(config, null, 2))
