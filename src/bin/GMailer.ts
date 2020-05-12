@@ -120,6 +120,13 @@ export default class GMailer {
 	}
 
 	/**
+	 * @todo Add logic for attachments
+	 */
+	private addAttachment() {
+		// TODO
+	}
+
+	/**
 	 * Deliver a single static email
 	 * @param mail 
 	 * @param template 
