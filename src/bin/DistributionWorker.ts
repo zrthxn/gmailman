@@ -5,10 +5,10 @@ interface order {
 	delay: number
 }
 
-const mail = new GMailer({ userId: 'zrthxn@gmail.com' })
+const mail = new GMailer({ userId: 'zrthxn@gmail.com', username: 'Alisamar Husain' })
 process.on('message', (order)=>{
 	setTimeout(function startInstance(){
-		mail.DatasetDelivery(order.payload.mail, order.payload.content, order.payload.data)
+		mail.DatabaseDelivery(order.payload.mail, order.payload.content, order.payload.data)
 			.then(()=>{
 				process.send({ pid: order.pid, complete: true, errors: [] })
 			})

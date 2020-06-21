@@ -12,7 +12,7 @@
         "<node_internals>/**"
       ],
       "preLaunchTask": "npm: build",
-      "program": "${workspaceFolder}\\src\\index.ts",
+      "program": "${workspaceFolder}/src/index.ts",
       "outputCapture": "std",
       "outFiles": [
         "${workspaceFolder}/build/**/*.js"

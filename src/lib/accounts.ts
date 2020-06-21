@@ -30,7 +30,7 @@ export async function readCredentialsFile(userId:string) {
   
   if(config.accounts[userId].hasOwnProperty('credentials'))
     try {
-      const cred = fs.readFileSync(config.accounts[userId].credentials)
+      const cred = fs.readFileSync(path.resolve(config.accounts[userId].credentials))
       return JSON.parse(cred.toString())
     } catch (error) {
       return null
@@ -48,7 +48,7 @@ export async function readTokenFile(userId:string) {
   
   if(config.accounts[userId].hasOwnProperty('token'))
     try {
-      const token = fs.readFileSync(config.accounts[userId].token)
+      const token = fs.readFileSync(path.resolve(config.accounts[userId].token))
       return JSON.parse(token.toString())
     } catch (error) {
       return null
@@ -102,10 +102,10 @@ export async function deleteAccount(userId) {
     let config = await readConfigFile()
     
     if(config.accounts[userId].hasOwnProperty('credentials'))
-      fs.unlinkSync(config.accounts[userId].credentials)
+      fs.unlinkSync(path.resolve(config.accounts[userId].credentials))
 
     if(config.accounts[userId].hasOwnProperty('token'))
-      fs.unlinkSync(config.accounts[userId].token)
+      fs.unlinkSync(path.resolve(config.accounts[userId].token))
 
     fs.rmdirSync(path.join(MAILDIR, 'auth', userId), { recursive: true })
 

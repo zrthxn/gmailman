@@ -5,9 +5,11 @@
 
 import fs from 'fs'
 import path from 'path'
+import * as mime from 'mime-types'
 
 import { MAILDIR } from '../lib/cli'
-import { DataItem } from '../index.d'
+import { DataItem, Database, DataRow, Attachment } from '../index.d'
+import { Buffer } from 'buffer'
 
 /**
  * Read template by file name
@@ -27,15 +29,17 @@ export async function readTemplate(template:string) {
  * Read CSV and 
  * @param filepath Path of CSV file
  */
-export async function readCSV(filepath:string) {
+export async function readCSV(filepath:string): Promise<Database> {
+  console.log('Reading CSV from path...')
   try {
     let database = fs.readFileSync(path.resolve(filepath))
     
-    let data = [], addressList = []
+    let data: DataRow[] = []
+    let addressList: string[] = []
+
+    // ----- EMAIL ADDRESS EXTRACTION -----
     let raw = database.toString().split('\r\n')
 		let heads = raw[0].split(',')
-
-		// ----- EMAIL ADDRESS EXTRACTION -----
 		for (let row = 1; row < raw.length; row++) {
 			let row_entry = []
 			for (let col = 0; col < heads.length; col++)
@@ -50,7 +54,26 @@ export async function readCSV(filepath:string) {
 			data.push(row_entry)
 		}
 
-    return [ data, addressList ]
+    return { data, addressList }
+  } catch (error) {
+    console.error(error)
+    return null
+  }
+}
+
+/**
+ * Read attachment as object
+ * @param filepath Path/to/Attachment file
+ */
+export async function readAttachment(filepath: string): Promise<Attachment> {
+  try {
+    let file = Buffer.from(fs.readFileSync(path.resolve(filepath)))
+    return {
+      size: file.byteLength,
+      mimeType: mime.lookup(path.resolve(filepath)),
+      filename: path.basename(path.resolve(filepath)),
+      data: file
+    }
   } catch (error) {
     console.error(error)
     return null

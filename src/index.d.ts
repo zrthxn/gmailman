@@ -13,21 +13,36 @@ export interface Email {
 	replyTo?: string
 	subject: string
 	body?: string
+	attachments?: Attachment[]
+}
+
+export interface Attachment {
+	mimeType: string
+	filename: string
+	size: number
+	data: Buffer
 }
 
 /**
  * Data Items
  */
-export type DataItem  = {
+export interface DataItem {
 	id: string
 	data: string
 }
-export type Database = DataItem[]
+
+export type DataRow = DataItem[]
+
+export interface Database { 
+	data: DataRow[]
+	addressList: string[]
+}
 
 /**
  * Delivery Options
  */
 export interface DeliveryOptions {
+	template?:string
 	quiet?: boolean
 	retryFailed?: boolean
 	retryCount?: number

@@ -1,12 +1,15 @@
 import { google, gmail_v1 } from 'googleapis'
 import { OAuth2Client } from 'googleapis-common'
 
-import { readTemplate, readCSV } from './DataEncoder'
+import { readTemplate, readCSV, readAttachment } from './DataEncoder'
 import deployNewInstance from './LoadBalancer'
 import { authorize } from '../lib/auth'
 
-import { Email, DataItem, Database, DeliveryOptions } from '../index.d'
+import { Email, DataItem, DeliveryOptions, Attachment } from '../index.d'
 import { GaxiosResponse } from 'gaxios'
+
+const _ENDL_ = '\r\n'
+const ATTACHMENT_MAXSIZE = 24 * 1024 * 1024
 
 /**
  * Class object for mailer object authorized with single email.
@@ -28,17 +31,7 @@ export default class GMailer {
 	private service: gmail_v1.Gmail
 
 	constructor({ userId, username }) {
-		this.MultipartSepartor = `multipart-000000${(+new Date).toString(16)}`
-		this.ContentHeaders =
-			'Mime-Version: 1.0\r\n' +
-			'Content-Type: multipart/alternative; boundary=\"' + this.MultipartSepartor + '\"\r\n' +
-			'Content-Transfer-Encoding: binary\r\n' +
-			'X-Mailer: MIME::Lite 3.030 (F2.84; T1.38; A2.12; B3.13; Q3.13)\r\n\r\n' +
-			'--' + this.MultipartSepartor + '\r\n' +
-			'Content-Transfer-Encoding: binary\r\n' +
-			'Content-Type: text/html; charset="utf-8"\r\n' +
-			'Content-Disposition: inline\r\n'
-
+		this.MultipartSepartor = `000000${(+new Date).toString(16)}`
 		this.userId = userId
 		this.username = username
 	}
@@ -81,38 +74,61 @@ export default class GMailer {
 	}
 
 	/**
-	 * Genetate email headers according to RFC822 spec
+	 * Encode Email headers according to RFC822 spec
 	 * @param mail Mail object
 	 */
-	private interpolateHeaders(mail:Email): string {
-		if(!mail.from)
-			mail.from = this.userId
-
-		if(mail.to==='me')
-			mail.to = this.userId
-
-		if(!mail.replyTo)
-			mail.replyTo = mail.from
+	private EncodeMessage(mail: Email): string {		
+		if(!mail.from) mail.from = this.userId
+		if(mail.to==='me') mail.to = this.userId
+		if(!mail.replyTo) mail.replyTo = mail.from
 		
 		try {
 			mail.subject = mail.body.split('<title>')[1].split('</title>')[0]
 		} catch(ErrorNoTitle) {
 			mail.subject = mail.subject
 		}
-		
-		const HEADERS = 
-			`From: "${this.username}" <${mail.from}>\r\n` +
-			`Date: ${(new Date()).toString()}\r\n` +
-			`Subject: ${mail.subject}\r\n` +
-			`To: ${mail.to}\r\n` +
-			`Reply-To: ${mail.replyTo}\r\n` +
-			this.ContentHeaders + `Content-Length: ${mail.body.length}\r\n\r\n`
 
-		return HEADERS
-	}
+		let ADDRESS_BLOCK = [
+			`From: "${this.username}" <${mail.from}>`,
+			`Date: ${(new Date()).toString()}`,
+			`Subject: ${mail.subject}`,
+			`To: ${mail.to}`,
+			`Reply-To: ${mail.replyTo}`,
+			'Mime-Version: 1.0',
+			`Content-Type: multipart/mixed; boundary=\"${this.MultipartSepartor}\"`,
+			'Content-Transfer-Encoding: binary', _ENDL_
+		].join(_ENDL_)
 
-	private base64Encode(headers, body): string {
-		return Buffer.from(headers + body + '\r\n--' + this.MultipartSepartor + '--\r\n')
+		// Body Content
+		let BODY_BLOCK = [
+			`Content-Transfer-Encoding: quoted-printable`,
+			`Content-Type: text/html; charset="utf-8"`,
+			`Content-Disposition: inline`,
+			`Content-Length: ${mail.body.length}`, _ENDL_,
+			mail.body, _ENDL_
+		].join(_ENDL_)
+
+		// Attachment Content
+		var ATTACHMENT_BLOCKS = []
+		for (const attachment of mail.attachments) {
+			ATTACHMENT_BLOCKS.push([
+				`Content-Transfer-Encoding: base64`,
+				`Content-Type: ${attachment.mimeType}; name=${attachment.filename}`,
+				`Content-Disposition: attachment; filename=${attachment.filename}`,
+				`Content-Length: ${attachment.size}`, _ENDL_, 
+				attachment.data.toString('base64'), _ENDL_
+			].join(_ENDL_))
+		}
+
+		var RAW_EMAIL = [
+			ADDRESS_BLOCK,
+			BODY_BLOCK,
+			...ATTACHMENT_BLOCKS
+		].join(
+			`--${this.MultipartSepartor}${_ENDL_}`
+		)
+
+		return Buffer.from(RAW_EMAIL + '--' + _ENDL_)
 			.toString('base64')
 			.replace(/\+/g, '-')
 			.replace(/\//g, '_')
@@ -120,25 +136,19 @@ export default class GMailer {
 	}
 
 	/**
-	 * @todo Add logic for attachments
-	 */
-	private addAttachment() {
-		// TODO
-	}
-
-	/**
 	 * Deliver a single static email
 	 * @param mail 
 	 * @param template 
 	 */
-	async SingleDelivery(mail:Email, template?:string, options?:DeliveryOptions) {
-		if(template)
-			mail.body = await readTemplate(template)
-		if(!mail.body) 
-			throw 'Neither body nor template provided'
+	async SingleDelivery(mail:Email, options?:DeliveryOptions) {
+		if(options) {
+			if(options.template)
+				mail.body = await readTemplate(options.template)		
+		}
 
-		const headers = this.interpolateHeaders(mail)		
-		const mail64 = this.base64Encode(headers, mail.body)
+		if(!mail.body) throw 'Neither body nor template provided'
+		
+		const mail64 = this.EncodeMessage(mail)
 		
 		if(options && !options.quiet)
 			console.log('Sending email', mail.to)
@@ -160,19 +170,37 @@ export default class GMailer {
 	 * @param data `DataItem` object
 	 * @param template Name of template
 	 */
-	async SingleDataDelivery(mail:Email, data:DataItem[], template?:string, options?:DeliveryOptions) {
-		if(template)
-			mail.body = await readTemplate(template)
-		if(!mail.body) 
-			throw 'Neither body nor template provided'
-		
-		for (const entry of data) {
-			const find = new RegExp(`\{\{ \(${entry.id}\) \}\}`, 'gi')
-			mail.body = mail.body.replace(find, entry.data)
+	async SingleDataDelivery(mail:Email, data:DataItem[], options?:DeliveryOptions) {
+		if(options) {
+			if(options.template)
+				mail.body = await readTemplate(options.template)		
 		}
 
-		const headers = this.interpolateHeaders(mail)
-		const mail64 = this.base64Encode(headers, mail.body)
+		if(!mail.body) throw 'Neither body nor template provided'
+		
+		for (const entry of data) {
+			if(entry.id.match(/attachmen[t|ts]/gi)) {
+				let attachments: Attachment[] = []
+				for (const filepath of entry.data.split(','))
+					attachments.push(
+						await readAttachment(filepath)
+					)
+
+				let netsize = attachments.reduce((size, file) => size += file.size, 0)
+				if(netsize >= ATTACHMENT_MAXSIZE)
+					throw 'Max. attachment size exceeded'
+
+				if(mail.attachments)
+					mail.attachments = [ ...mail.attachments, ...attachments]
+				else
+					mail.attachments = attachments
+			} else {
+				const find = new RegExp(`\{\{ \(${entry.id}\) \}\}`, 'gi')
+				mail.body = mail.body.replace(find, entry.data)
+			}
+		}
+
+		const mail64 = this.EncodeMessage(mail)
 
 		if(options && !options.quiet)
 			console.log('Sending email', mail.to)
@@ -194,25 +222,43 @@ export default class GMailer {
 	 * @param dataPath Path of CSV file to read data from
 	 * @param template Name of template
 	 */
-	async DatasetDelivery(mail:Email, dataPath:string, template?:string, options?:DeliveryOptions) {
-		let [data, addressList] = await readCSV(dataPath)
-		let MailQueue = []
+	async DatabaseDelivery(mail:Email, datapath:string, options?:DeliveryOptions) {
+		if(options) {
+			if(options.template)
+				mail.body = await readTemplate(options.template)
+		}
 
-		if(template)
-			mail.body = await readTemplate(template)
-		if(!mail.body) 
-			throw 'Neither body nor template provided'
+		if(!mail.body) throw 'Neither body nor template provided'
+		
+		var { data, addressList } = await readCSV(datapath)
+		var MailQueue = []
 
 		for (const recipient of data) {
 			var send = mail
 			for (const entry of recipient) {
-				const find = new RegExp(`\{\{ \(${entry.id}\) \}\}`, 'gi')
-				send.body = send.body.replace(find, entry.data)
+				if(entry.id.match(/attachmen[t|ts]/gi)) {
+					let attachments: Attachment[]
+					for (const filepath of entry.data.split(','))
+						attachments.push(
+							await readAttachment(filepath)
+						)
+
+					let netsize = attachments.reduce((size, file) => size += file.size, 0)
+					if(netsize >= ATTACHMENT_MAXSIZE)
+						throw 'Max. attachment size exceeded'
+
+					if(send.attachments)
+						send.attachments = [ ...send.attachments, ...attachments]
+					else
+						send.attachments = attachments
+				} else {
+					const find = new RegExp(`\{\{ \(${entry.id}\) \}\}`, 'gi')
+					send.body = send.body.replace(find, entry.data)
+				}
 			}
 
-			const headers = this.interpolateHeaders(send)
 			MailQueue.push(
-				this.base64Encode(headers, send)
+				this.EncodeMessage(send)
 			)
 		}
 
@@ -270,24 +316,24 @@ export default class GMailer {
 	 * @param content 
 	 * @param database 
 	 */
-	async DistributedCampaign(mail:Email, content:string, database:Database) {
-		const MAX_DATA = 50
+	// async DistributedCampaign(mail:Email, content:string, database:Database) {
+	// 	const MAX_DATA = 50
 
-		let payload = []
-		let data_rows = database//.split('\r\n')
-		let head = data_rows[0]
+	// 	let payload = []
+	// 	let data_rows = database//.split('\r\n')
+	// 	let head = data_rows[0]
 
-		let count = Math.floor((data_rows.length - 1) / MAX_DATA) + 1
-		for (let i = 0; i < count; i++) {
-			let data = String()
-			for (let j = MAX_DATA * i + 1; j <= (i + 1) * MAX_DATA; j++) {
-				if (!data_rows[j]) break
-				data += ('\r\n' + data_rows[j])
-			}
+	// 	let count = Math.floor((data_rows.length - 1) / MAX_DATA) + 1
+	// 	for (let i = 0; i < count; i++) {
+	// 		let data = String()
+	// 		for (let j = MAX_DATA * i + 1; j <= (i + 1) * MAX_DATA; j++) {
+	// 			if (!data_rows[j]) break
+	// 			data += ('\r\n' + data_rows[j])
+	// 		}
 
-			payload.push({ mail, content, data: head + data })
-		}
+	// 		payload.push({ mail, content, data: head + data })
+	// 	}
 
-		deployNewInstance('./DistributionWorker', count, payload, 'free')
-	}
+	// 	deployNewInstance('./DistributionWorker', count, payload, 'free')
+	// }
 }

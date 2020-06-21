@@ -19,23 +19,21 @@ process.env['VERBOSITY'] = 'true'
 
 switch (func) {
   case 'account':
-    // go to accounts handler
     accountHandler(task, args)
     break
 
   case 'authorize':
-    // go to auth handler
     authHandler(task, args)
     break
 
   case 'template':
     // use gmailer from the CLI
-    console.log('To be implemented')
+    console.log('Unimplemented')
     break
 
   case 'send':
     // use gmailer from the CLI
-    console.log('To be implemented')
+    console.log('Unimplemented')
     break
 
   default:
