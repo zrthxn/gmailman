@@ -6,7 +6,7 @@
  * @description Email object interface
  */
 export interface Email {
-	to: string //| string[]
+	to?: string //| string[]
 	cc?: string | string[]
 	bcc?: string | string[]
 	from?: string

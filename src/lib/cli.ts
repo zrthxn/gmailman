@@ -10,8 +10,8 @@ import * as auth from './auth'
 
 export const MAILDIR = path.join(process.cwd(), 'mail')
 
-const [ func, task ] = process.argv.slice(process.execArgv.length + 2)
-const args = process.argv.slice(process.execArgv.length + 4)
+const [ func, task ] = process.argv.slice(process.execArgv.length + 1)
+const args = process.argv.slice(process.execArgv.length + 3)
 
 console.log('Get your credentials file at https://developers.google.com/gmail/api/quickstart/nodejs')
 

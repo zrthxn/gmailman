@@ -73,6 +73,7 @@ export async function getNewToken(oAuth2Client:OAuth2Client, userId:string, scop
 
             let config = await readConfigFile()
             config.accounts[userId] = {
+              ...config.accounts[userId],
               token: path.join(MAILDIR, 'auth', userId, `token-${+new Date}.json`),
               expiresOn: token.expiry_date
             }

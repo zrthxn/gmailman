@@ -180,20 +180,16 @@ export default class GMailer {
 		
 		for (const entry of data) {
 			if(entry.id.match(/attachmen[t|ts]/gi)) {
-				let attachments: Attachment[] = []
-				for (const filepath of entry.data.split(','))
-					attachments.push(
-						await readAttachment(filepath)
-					)
+				let attachment: Attachment = await readAttachment(entry.data)
 
-				let netsize = attachments.reduce((size, file) => size += file.size, 0)
-				if(netsize >= ATTACHMENT_MAXSIZE)
-					throw 'Max. attachment size exceeded'
+					if(mail.attachments)
+						mail.attachments = [ ...mail.attachments, attachment]
+					else
+						mail.attachments = [ attachment ]
 
-				if(mail.attachments)
-					mail.attachments = [ ...mail.attachments, ...attachments]
-				else
-					mail.attachments = attachments
+					let netsize = mail.attachments.reduce((size, file) => size += file.size, 0)
+					if(netsize >= ATTACHMENT_MAXSIZE)
+						throw 'Max. attachment size exceeded'
 			} else {
 				const find = new RegExp(`\{\{ \(${entry.id}\) \}\}`, 'gi')
 				mail.body = mail.body.replace(find, entry.data)
@@ -226,6 +222,10 @@ export default class GMailer {
 		if(options) {
 			if(options.template)
 				mail.body = await readTemplate(options.template)
+
+			var retryCount = 0
+			if(options.retryFailed && options.retryCount)
+				retryCount = options.retryCount
 		}
 
 		if(!mail.body) throw 'Neither body nor template provided'
@@ -233,24 +233,24 @@ export default class GMailer {
 		var { data, addressList } = await readCSV(datapath)
 		var MailQueue = []
 
-		for (const recipient of data) {
-			var send = mail
+		for (let IDX = 0; IDX < addressList.length; IDX++) {
+			const recipient = data[IDX]
+			var send = {
+				...mail, to: addressList[IDX]
+			}
+
 			for (const entry of recipient) {
 				if(entry.id.match(/attachmen[t|ts]/gi)) {
-					let attachments: Attachment[]
-					for (const filepath of entry.data.split(','))
-						attachments.push(
-							await readAttachment(filepath)
-						)
-
-					let netsize = attachments.reduce((size, file) => size += file.size, 0)
-					if(netsize >= ATTACHMENT_MAXSIZE)
-						throw 'Max. attachment size exceeded'
+					let attachment: Attachment = await readAttachment(entry.data)
 
 					if(send.attachments)
-						send.attachments = [ ...send.attachments, ...attachments]
+						send.attachments = [ ...send.attachments, attachment]
 					else
-						send.attachments = attachments
+						send.attachments = [ attachment ]
+
+					let netsize = send.attachments.reduce((size, file) => size += file.size, 0)
+					if(netsize >= ATTACHMENT_MAXSIZE)
+						throw 'Max. attachment size exceeded'
 				} else {
 					const find = new RegExp(`\{\{ \(${entry.id}\) \}\}`, 'gi')
 					send.body = send.body.replace(find, entry.data)
@@ -263,10 +263,6 @@ export default class GMailer {
 		}
 
 		let failAddressList = [], FailQueue = []
-		let retryCount = options.retryCount || 0
-		if(!options.retryFailed)
-			retryCount = 0
-
 		do {
 			try {
 				let index = 0

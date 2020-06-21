@@ -26,8 +26,8 @@
         "<node_internals>/**"
       ],
       "preLaunchTask": "npm: build",
-      "program": "${workspaceFolder}\\src\\lib\\cli.ts",
-      "args": ["account", "add", "--email=zrthxn@gmail.com", "--credentials=./credentials.json"],
+      "program": "${workspaceFolder}/src/lib/cli.ts",
+      "args": ["account", "add", "--email=ieeejmiteam@gmail.com", "--credentials=./client_secret_105518787567-99ucfjfvrebjnj30h0c9efnotu6viej5.apps.googleusercontent.com.json"],
       "outputCapture": "std",
       "outFiles": [
         "${workspaceFolder}/build/**/*.js"

@@ -43,9 +43,13 @@ export async function readCSV(filepath:string): Promise<Database> {
 		for (let row = 1; row < raw.length; row++) {
 			let row_entry = []
 			for (let col = 0; col < heads.length; col++)
-				if (heads[col].toLowerCase()==='email')
-					addressList.push(raw[row].split(',')[col])
-				else {
+				if (heads[col].toLowerCase()==='email'){
+          addressList.push(raw[row].split(',')[col])
+          row_entry.push({
+						id: 'Email',
+						data: raw[row].split(',')[col]
+					})
+        } else {
 					row_entry.push({
 						id: heads[col],
 						data: raw[row].split(',')[col]
