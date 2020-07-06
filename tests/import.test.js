@@ -9,5 +9,5 @@ test('import', _ => {
 });
 
 test('maildir', _ => {
-  mailer.addAccount('test', '', 'Test');
+  // mailer.addAccount('test', '', 'Test');
 })
