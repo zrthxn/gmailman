@@ -2,12 +2,14 @@
   "name": "@zrthxn/gmailer",
   "version": "0.1.0",
   "description": "",
-  "main": "./build/index.js",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watch",
     "build": "rm -rf build && tsc",
-    "build:watch": "tsc -b -w"
+    "build:watch": "tsc -b -w",
+    "prepublish": "npm run build"
   },
   "bin": {
     "gmailer": "./build/lib/cli.js"
