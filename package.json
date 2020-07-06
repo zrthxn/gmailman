@@ -9,7 +9,7 @@
     "test:watch": "jest --watch",
     "build": "rm -rf build && tsc",
     "build:watch": "tsc -b -w",
-    "prepare": "npm run build"
+    "prepare": "npm run build && npm run test && npm verison patch"
   },
   "bin": {
     "gmailer": "./build/lib/cli.js"
