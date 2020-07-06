@@ -1,13 +1,13 @@
 const mailer = require('../build/index');
 const { GMailer } = require('../build/index');
 
-test('import', _ => {
+test('import', () => {
   new GMailer({
     userId: '',
     username: ''
   });
 });
 
-test('maildir', _ => {
+test('maildir', () => {
   // mailer.addAccount('test', '', 'Test');
 })
