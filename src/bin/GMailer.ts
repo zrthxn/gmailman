@@ -19,7 +19,7 @@ const ATTACHMENT_MAXSIZE = 24 * 1024 * 1024
  * @description
  * `class` Gmailer
  */
-export default class GMailer {
+export class GMailer {
 	readonly SCOPES = ['https://mail.google.com']	
 	readonly ContentHeaders
 	readonly MultipartSepartor
@@ -333,3 +333,5 @@ export default class GMailer {
 	// 	deployNewInstance('./DistributionWorker', count, payload, 'free')
 	// }
 }
+
+export default GMailer

@@ -3,9 +3,11 @@
   "compilerOptions": {
     "sourceMap": true,
     "outDir": "build",
-    "target": "es5",
-    "module": "commonjs",
-    "lib": ["es2015"],
+    "target": "ES5",
+    "module": "CommonJS",
+    "lib": [
+      "es2015"
+    ],
     "esModuleInterop": true,
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
