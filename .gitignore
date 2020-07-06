@@ -4,6 +4,7 @@ package-lock.json
 
 # Build
 build/
+mail/
 
 # Auth related
 auth/
