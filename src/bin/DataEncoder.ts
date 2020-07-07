@@ -7,23 +7,9 @@ import fs from 'fs'
 import path from 'path'
 import * as mime from 'mime-types'
 
-import { MAILDIR } from '../index'
-import { DataItem, Database, DataRow, Attachment } from '../index.d'
-import { Buffer } from 'buffer'
+import { MAILDIR } from '..'
 
-/**
- * Read template by file name
- * @param template Template filename
- */
-export async function readTemplate(template:string) {
-  try {
-    let data = fs.readFileSync(path.join(MAILDIR, 'templates', template))
-    return data.toString()
-  } catch (error) {
-    console.error(error)
-    return null
-  }
-}
+import { DataItem, Database, DataRow, Attachment } from '../index.d'
 
 /**
  * Read CSV and 

@@ -1,7 +1,6 @@
 /**
  * @description
- * Handle authentication with GMail scopes 
- * with OAuth2 and store token files.
+ * Handle authentication with GMail scopes with OAuth2 and store token files.
  */
 
 import fs from 'fs'

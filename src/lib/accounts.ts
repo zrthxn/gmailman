@@ -6,7 +6,7 @@
 import path from 'path'
 import fs from 'fs'
 
-import { MAILDIR } from '../index'
+import { MAILDIR } from '..'
 
 /**
  * Read the GMailer config file
@@ -94,7 +94,7 @@ export async function addAccount(userId:string, credentials:string, username?:st
  * from account registry.
  * @param email Email to delete from registry
  */
-export async function deleteAccount(userId) {
+export async function deleteAccount(userId:string) {
   if(process.env['VERBOSITY']=='true')
     console.log('Deleting account', userId)
   

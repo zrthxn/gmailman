@@ -1,5 +1,3 @@
-import path from 'path'
-
 export * from './bin/GMailer'
 export * from './bin/DataEncoder'
 export * from './bin/LoadBalancer'
@@ -11,7 +9,8 @@ export * from './lib/templates'
 
 export * from './index.d'
 
-export const MAILDIR = path.join(process.cwd(), 'mail')
+import { join } from 'path'
+export const MAILDIR = join(process.cwd(), 'mail')
 
 // TEST ----------------------------------------
 

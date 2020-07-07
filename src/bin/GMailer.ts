@@ -1,9 +1,11 @@
 import { google, gmail_v1 } from 'googleapis'
 import { OAuth2Client } from 'googleapis-common'
 
-import { readTemplate, readCSV, readAttachment } from './DataEncoder'
+import { readCSV, readAttachment } from './DataEncoder'
 import deployNewInstance from './LoadBalancer'
+
 import { authorize } from '../lib/auth'
+import { readTemplate } from '../lib/templates'
 
 import { Email, DataItem, DeliveryOptions, Attachment } from '../index.d'
 import { GaxiosResponse } from 'gaxios'

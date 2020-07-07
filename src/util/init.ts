@@ -6,7 +6,7 @@ import { conf } from './conf'
 
 console.log(conf.Blue('Creating MAIL directory in cwd...'))
 
-const ROOTDIR = path.resolve(path.join(MAILDIR, '../../../../'))
+const ROOTDIR = path.resolve(path.join(MAILDIR, '../../../../', 'mail'))
 const _init_config_ = JSON.stringify({
   accounts: {}, templates: {}
 }, null, 2)
@@ -20,3 +20,4 @@ fs.mkdirSync(path.join(ROOTDIR, 'templates'), { recursive: true })
 fs.writeFileSync(path.join(ROOTDIR, 'gmailer.config.json'), _init_config_)
 
 console.log(conf.Green('Initialized MAILDIR'))
+console.log('It is recommended that you add the \"mail\" directory to your .gitignore file.')
