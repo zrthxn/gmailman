@@ -9,7 +9,7 @@ import readline from 'readline'
 import { google } from 'googleapis'
 import { OAuth2Client } from 'googleapis-common'
 
-import { MAILDIR } from './cli'
+import { MAILDIR } from '../index'
 import { readCredentialsFile, readTokenFile, readConfigFile } from './accounts'
 import path from 'path'
 

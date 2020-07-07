@@ -6,7 +6,7 @@
 import path from 'path'
 import fs from 'fs'
 
-import { MAILDIR } from './cli'
+import { MAILDIR } from '../index'
 
 /**
  * Read the GMailer config file

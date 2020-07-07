@@ -1,14 +1,17 @@
+import path from 'path'
+
 export * from './bin/GMailer'
 export * from './bin/DataEncoder'
 export * from './bin/LoadBalancer'
 export * from './bin/DistributionWorker'
-// export * from './bin/Budgets'
 
 export * from './lib/accounts'
 export * from './lib/auth'
-// export * from './lib/templates'
+export * from './lib/templates'
 
 export * from './index.d'
+
+export const MAILDIR = path.join(process.cwd(), 'mail')
 
 // TEST ----------------------------------------
 

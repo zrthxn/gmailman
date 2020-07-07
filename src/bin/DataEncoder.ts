@@ -7,7 +7,7 @@ import fs from 'fs'
 import path from 'path'
 import * as mime from 'mime-types'
 
-import { MAILDIR } from '../lib/cli'
+import { MAILDIR } from '../index'
 import { DataItem, Database, DataRow, Attachment } from '../index.d'
 import { Buffer } from 'buffer'
 
@@ -124,7 +124,3 @@ export async function readAttachment(filepath: string): Promise<Attachment> {
 //   var raw = (from + to + subject + headers + current_email + '\r\n--' + this.MultipartSepartor + '--\r\n')
 //   return raw
 // }
-
-function attachment() {
-
-}
