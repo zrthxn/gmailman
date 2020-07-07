@@ -8,7 +8,7 @@
     "test": "jest",
     "build": "rm -rf build && tsc",
     "prepare": "npm run build && npm run test && npm version patch",
-    "postinstall": "node build/util/init.js && echo pwd"
+    "postinstall": "node build/util/init.js && pwd"
   },
   "bin": {
     "gmailer": "build/cli.js"
