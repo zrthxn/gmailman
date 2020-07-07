@@ -6,7 +6,7 @@ import { conf } from './conf'
 
 console.log(conf.Blue('Creating MAIL directory in cwd...'))
 
-const ROOTDIR = path.resolve(path.join(MAILDIR, '../../../'))
+const ROOTDIR = path.resolve(path.join(MAILDIR, '../../../../'))
 const _init_config_ = JSON.stringify({
   accounts: {}, templates: {}
 }, null, 2)
