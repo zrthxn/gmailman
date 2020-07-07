@@ -1,4 +1,8 @@
+node_modules/
 mail/
 auth/
-node_modules/
-src/
+templates/
+tests/
+.vscode/
+tsconfig.json
+jest.config.js
