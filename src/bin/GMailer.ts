@@ -287,7 +287,7 @@ export class GMailer {
 								throw `Unsuccessful sending to ${address}`
 							}
 						} catch (error) {
-							console.error(error)
+							// console.error(error)
 						}
 					} 
 					else
@@ -295,10 +295,10 @@ export class GMailer {
 							console.error(`Invalid row ${index}: No email address provided` )
 				}
 			} catch (error) {
-				console.error(error)
+				// console.error(error)
 			}
 
-			if(options.retryFailed) {
+			if(options && options.retryFailed) {
 				retryCount--
 				MailQueue = FailQueue
 				addressList = failAddressList
