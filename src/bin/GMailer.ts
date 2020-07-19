@@ -70,7 +70,7 @@ export class GMailer {
 
 			return res
 		} catch (errors) {
-			console.error(errors)
+			// console.error(errors)
 			return Promise.reject(errors)
 		}
 	}
