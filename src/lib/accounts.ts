@@ -30,8 +30,8 @@ export async function readCredentialsFile(userId:string) {
   
   if(config.accounts[userId].hasOwnProperty('credentials'))
     try {
-      const cred = fs.readFileSync(path.resolve(config.accounts[userId].credentials))
-      return JSON.parse(cred.toString())
+      const cred = JSON.parse(fs.readFileSync(path.resolve(config.accounts[userId].credentials)).toString())
+      return cred
     } catch (error) {
       return null
     }
@@ -48,8 +48,12 @@ export async function readTokenFile(userId:string) {
   
   if(config.accounts[userId].hasOwnProperty('token'))
     try {
-      const token = fs.readFileSync(path.resolve(config.accounts[userId].token))
-      return JSON.parse(token.toString())
+      const token = JSON.parse(fs.readFileSync(path.resolve(config.accounts[userId].token)).toString())
+      
+      if (token.expiresOn < Date.now())
+        throw "Token expired"
+
+      return token
     } catch (error) {
       return null
     }
