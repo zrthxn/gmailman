@@ -7,8 +7,6 @@ import fs from 'fs'
 import path from 'path'
 import * as mime from 'mime-types'
 
-import { MAILDIR } from '..'
-
 import { DataItem, Database, DataRow, Attachment } from '../index.d'
 
 /**
@@ -23,25 +21,33 @@ export async function readCSV(filepath:string): Promise<Database> {
     let data: DataRow[] = []
     let addressList: string[] = []
 
-    // ----- EMAIL ADDRESS EXTRACTION -----
     let raw = database.toString().split('\r\n')
-		let heads = raw[0].split(',')
+    let headers = raw[0].split(',')
+    
+    if(!headers.includes('Email') && !headers.includes('email'))
+      throw "No email field"
+
 		for (let row = 1; row < raw.length; row++) {
-			let row_entry = []
-			for (let col = 0; col < heads.length; col++)
-				if (heads[col].toLowerCase()==='email'){
+      let row_entry:DataRow = []
+      
+      for (let col = 0; col < headers.length; col++)
+        if (raw[row].split(',')[col]==undefined)
+          continue
+				else if (headers[col].toLowerCase()==='email') {
           addressList.push(raw[row].split(',')[col])
           row_entry.push({
 						id: 'Email',
 						data: raw[row].split(',')[col]
 					})
-        } else {
+        } 
+        else {
 					row_entry.push({
-						id: heads[col],
+						id: headers[col],
 						data: raw[row].split(',')[col]
 					})
 				}
-			data.push(row_entry)
+      
+      data.push(row_entry)
 		}
 
     return { data, addressList }
