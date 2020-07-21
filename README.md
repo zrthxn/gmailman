@@ -20,6 +20,6 @@ Contributions are welcome.
 - [x] Add support for attachments
 - [x] Add support for templates
 - [x] Add support for jinja2 syntax
-- [ ] Multi-threaded/process mailing
+- [ ] Multi-process mailing
 - [ ] Complete the CLI
 - [ ] Write proper tests
