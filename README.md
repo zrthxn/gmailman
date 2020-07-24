@@ -3,7 +3,7 @@
 ![issues](https://img.shields.io/github/issues/zrthxn/gmailer)
 ![commits](https://img.shields.io/github/last-commit/zrthxn/gmailer)
 ![npm](https://img.shields.io/npm/v/@zrthxn/gmailer)
-![wip](https://img.shields.io/badge/dev-work%20in%20progress-blue)
+![wip](https://img.shields.io/badge/dev-working-blue)
 
 A lightweight and secure library for easily sending emails using Gmail SMTP servers and a Gmail/GSuite Account. 
 This package **does not use Nodemailer** but uses Google APIs. It simplifies the mammoth task of dealing with OAuth2 
