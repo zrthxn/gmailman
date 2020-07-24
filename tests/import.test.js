@@ -1,8 +1,8 @@
 const mailer = require('../build/index');
-const { GMailer } = require('../build/index');
+const { Mailer } = require('../build/index');
 
 test('import', () => {
-  new GMailer({
+  const GMailer = new Mailer({
     userId: '',
     username: ''
   });
