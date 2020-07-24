@@ -1,8 +1,8 @@
 # GmailMan
 
-![issues](https://img.shields.io/github/issues/zrthxn/gmailer)
-![commits](https://img.shields.io/github/last-commit/zrthxn/gmailer)
-![npm](https://img.shields.io/npm/v/@zrthxn/gmailer)
+![issues](https://img.shields.io/github/issues/zrthxn/gmailman)
+![commits](https://img.shields.io/github/last-commit/zrthxn/gmailman)
+![npm](https://img.shields.io/npm/v/@zrthxn/gmailman)
 ![wip](https://img.shields.io/badge/dev-working-blue)
 
 A lightweight and secure library for easily sending emails using Gmail SMTP servers and a Gmail/GSuite Account. 
