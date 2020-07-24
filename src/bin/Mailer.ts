@@ -7,7 +7,7 @@ import deployNewInstance from './LoadBalancer'
 import { authorize } from '../lib/auth'
 import { readTemplate } from '../lib/templates'
 
-import { Email, DataItem, DeliveryOptions, Attachment } from '../index.d'
+import { Email, DataItem, DeliveryOptions, Attachment } from '..'
 import { GaxiosResponse } from 'gaxios'
 
 const _ENDL_ = '\r\n'
@@ -21,7 +21,7 @@ const ATTACHMENT_MAXSIZE = 24 * 1024 * 1024
  * @description
  * `class` Gmailer
  */
-export class GMailer {
+export class Mailer {
 	readonly SCOPES = ['https://mail.google.com']	
 	readonly ContentHeaders
 	readonly MultipartSepartor
@@ -336,4 +336,4 @@ export class GMailer {
 	// }
 }
 
-export default GMailer
+export default Mailer

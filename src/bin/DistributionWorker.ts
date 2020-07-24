@@ -1,9 +1,13 @@
 import cluster from 'cluster'
-import GMailer from './GMailer'
+import GMailer from './Mailer'
 
 interface order {
 	delay: number
 }
+
+/**
+ * @todo Multiprocessing
+ */
 
 const mail = new GMailer({ userId: 'zrthxn@gmail.com', username: 'Alisamar Husain' })
 process.on('message', (order)=>{
