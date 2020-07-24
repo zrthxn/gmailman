@@ -1,5 +1,5 @@
 {
-  "name": "@zrthxn/gmailer",
+  "name": "gmailman",
   "version": "0.2.4",
   "description": "",
   "main": "build/index.js",
@@ -17,6 +17,9 @@
     "type": "git",
     "url": "git+https://github.com/zrthxn/gmailer.git"
   },
+  "keywords": [
+    "gmail", "interpolation", "emails", "nodemailer"
+  ],
   "author": "Alisamar Husain",
   "license": "MIT",
   "bugs": {

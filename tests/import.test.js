@@ -8,6 +8,6 @@ test('import', () => {
   });
 });
 
-test('maildir', () => {
-  // mailer.addAccount('test', '', 'Test');
-})
+// test('maildir', () => {
+//   // mailer.addAccount('test', '', 'Test');
+// })

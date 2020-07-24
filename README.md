@@ -6,7 +6,8 @@
 ![wip](https://img.shields.io/badge/dev-work%20in%20progress-blue)
 
 A lightweight and secure library for easily sending emails using Gmail SMTP servers and a Gmail/GSuite Account. 
-This package does not use Nodemailer but uses Google APIs. It simplifies the mammoth task of dealing with OAuth2 and does it in a secure manner. Useful for building servers with mailing features.
+This package **does not use Nodemailer** but uses Google APIs. It simplifies the mammoth task of dealing with OAuth2 
+and does it in a secure manner. Useful for building servers with mailing features.
 
 **[ THIS PACKAGE IS INCOMPLETE. PLEASE DO NOT USE IN PRODUCTION ]**
 
