@@ -112,15 +112,16 @@ export class Mailer {
 
 		// Attachment Content
 		var ATTACHMENT_BLOCKS = []
-		for (const attachment of mail.attachments) {
-			ATTACHMENT_BLOCKS.push([
-				`Content-Transfer-Encoding: base64`,
-				`Content-Type: ${attachment.mimeType}; name=${attachment.filename}`,
-				`Content-Disposition: attachment; filename=${attachment.filename}`,
-				`Content-Length: ${attachment.size}`, _ENDL_, 
-				attachment.data.toString('base64'), _ENDL_
-			].join(_ENDL_))
-		}
+		if(mail.attachments)
+			for (const attachment of mail.attachments) {
+				ATTACHMENT_BLOCKS.push([
+					`Content-Transfer-Encoding: base64`,
+					`Content-Type: ${attachment.mimeType}; name=${attachment.filename}`,
+					`Content-Disposition: attachment; filename=${attachment.filename}`,
+					`Content-Length: ${attachment.size}`, _ENDL_, 
+					attachment.data.toString('base64'), _ENDL_
+				].join(_ENDL_))
+			}
 
 		var RAW_EMAIL = [
 			ADDRESS_BLOCK,
@@ -184,14 +185,14 @@ export class Mailer {
 			if(entry.id.match(/attachmen[t|ts]/gi)) {
 				let attachment: Attachment = await readAttachment(entry.data)
 
-					if(mail.attachments)
-						mail.attachments = [ ...mail.attachments, attachment]
-					else
-						mail.attachments = [ attachment ]
+				if(mail.attachments)
+					mail.attachments = [ ...mail.attachments, attachment]
+				else
+					mail.attachments = [ attachment ]
 
-					let netsize = mail.attachments.reduce((size, file) => size += file.size, 0)
-					if(netsize >= ATTACHMENT_MAXSIZE)
-						throw 'Max. attachment size exceeded'
+				let netsize = mail.attachments.reduce((size, file) => size += file.size, 0)
+				if(netsize >= ATTACHMENT_MAXSIZE)
+					throw 'Max. attachment size exceeded'
 			} else {
 				const find = new RegExp(`\{\{ \(${entry.id}\) \}\}`, 'gi')
 				mail.body = mail.body.replace(find, entry.data)
