@@ -112,7 +112,7 @@ export class Mailer {
 
 		// Attachment Content
 		var ATTACHMENT_BLOCKS = []
-		if(mail.attachments)
+		if(mail.attachments) {
 			for (const attachment of mail.attachments) {
 				ATTACHMENT_BLOCKS.push([
 					`Content-Transfer-Encoding: base64`,
@@ -122,6 +122,7 @@ export class Mailer {
 					attachment.data.toString('base64'), _ENDL_
 				].join(_ENDL_))
 			}
+		}
 
 		var RAW_EMAIL = [
 			ADDRESS_BLOCK,
