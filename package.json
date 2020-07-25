@@ -1,6 +1,6 @@
 {
   "name": "gmailman",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "",
   "main": "build/index.js",
   "types": "build/index.d.ts",
