@@ -103,7 +103,7 @@ export class Mailer {
 
 		// Body Content
 		let BODY_BLOCK = [
-			`Content-Transfer-Encoding: quoted-printable`,
+			`Content-Transfer-Encoding: binary`,
 			`Content-Type: text/html; charset="utf-8"`,
 			`Content-Disposition: inline`,
 			`Content-Length: ${mail.body.length}`, _ENDL_,
@@ -112,7 +112,7 @@ export class Mailer {
 
 		// Attachment Content
 		var ATTACHMENT_BLOCKS = []
-		if(mail.attachments) {
+		if(mail.attachments !== undefined) {
 			for (const attachment of mail.attachments) {
 				ATTACHMENT_BLOCKS.push([
 					`Content-Transfer-Encoding: base64`,

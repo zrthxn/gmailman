@@ -33,6 +33,7 @@ export async function readCredentialsFile(userId:string) {
       const cred = JSON.parse(fs.readFileSync(path.resolve(config.accounts[userId].credentials)).toString())
       return cred
     } catch (error) {
+      console.error(error)
       return null
     }
   else
