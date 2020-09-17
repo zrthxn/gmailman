@@ -39,8 +39,18 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
+    "chalk-pipe": "^4.0.0",
+    "cookie-parser": "^1.4.5",
+    "express": "^4.17.1",
+    "express-handlebars": "^5.1.0",
     "googleapis": "^50.0.0",
+    "handlebars": "^4.7.6",
+    "inquirer": "^7.3.3",
+    "inquirer-directory": "^2.2.0",
+    "inquirer-file-path": "^1.0.1",
     "mime-types": "^2.1.27",
-    "readline": "^1.3.0"
+    "multer": "^1.4.2",
+    "readline": "^1.3.0",
+    "vhost": "^3.0.2"
   }
 }

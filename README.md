@@ -1,4 +1,4 @@
-# GmailMan
+# GMailMan
 
 ![issues](https://img.shields.io/github/issues/zrthxn/gmailman)
 ![commits](https://img.shields.io/github/last-commit/zrthxn/gmailman)

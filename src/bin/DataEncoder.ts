@@ -12,6 +12,7 @@ import { DataItem, Database, DataRow, Attachment } from '../index.d'
 /**
  * Read CSV and 
  * @param filepath Path of CSV file
+ * @todo SUBOPTIMAL
  */
 export async function readCSV(filepath:string): Promise<Database> {
   console.log('Reading CSV from path...')

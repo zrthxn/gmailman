@@ -6,12 +6,15 @@ import { conf } from './conf'
 
 console.log(conf.Blue('Creating MAIL directory in cwd...'))
 
+// SUB OPTIMAL
 const ROOTDIR = path.resolve(path.join(MAILDIR, '../../../../', 'mail'))
 const _init_config_ = JSON.stringify({
   accounts: {}, templates: {}
 }, null, 2)
 
 console.log(ROOTDIR)
+
+// fs.existsSync(ROOTDIR)
 
 fs.mkdirSync(ROOTDIR, { recursive: true })
 fs.mkdirSync(path.join(ROOTDIR, 'auth'), { recursive: true })
