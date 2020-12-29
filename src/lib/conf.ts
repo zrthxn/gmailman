@@ -3,15 +3,20 @@ export const conf = {
   Red: (arg:string) => conf.colors.Red + arg + conf.colors.Reset,
   Green: (arg:string) => conf.colors.Green + arg + conf.colors.Reset,
   Yellow: (arg:string) => conf.colors.Yellow + arg + conf.colors.Reset,
-  Blue: (arg:string) => conf.colors.Black + arg + conf.colors.Reset,
+  Blue: (arg:string) => conf.colors.Blue + arg + conf.colors.Reset,
   Magenta: (arg:string) => conf.colors.Magenta + arg + conf.colors.Reset,
   Cyan: (arg:string) => conf.colors.Cyan + arg + conf.colors.Reset,
   White: (arg:string) => conf.colors.White + arg + conf.colors.Reset,
 
+  Line: (arg:string) => conf.format.Break + arg + conf.format.Break,
+
   copyright:'\u00A9',
 
   format: {
-    Bold: ''
+    Bold: '',
+    Tab: '\t',
+    Break: '\n',
+    CRLF: '\r\n'
   },
   
   colors: {
@@ -26,3 +31,5 @@ export const conf = {
     Reset: '\u001b[0m',
   }
 }
+
+export default conf

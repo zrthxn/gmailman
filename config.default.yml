@@ -1,0 +1,9 @@
+version: v3
+
+mode: local | container
+access: superuser
+database:
+  type: local
+  host: mongodb://localhost:27017
+  username: default
+  password: example

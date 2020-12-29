@@ -1,8 +1,8 @@
 import fs from 'fs'
 import path from 'path'
 
-import { MAILDIR } from '../index'
-import { conf } from './conf'
+import { MAILDIR } from './index'
+import { conf } from './lib/conf'
 
 console.log(conf.Blue('Creating MAIL directory in cwd...'))
 
@@ -24,3 +24,7 @@ fs.writeFileSync(path.join(ROOTDIR, 'gmailer.config.json'), _init_config_)
 
 console.log(conf.Green('Initialized MAILDIR'))
 console.log('It is recommended that you add the \"mail\" directory to your .gitignore file.')
+
+export function initialize(options:string[] = []) {
+
+}

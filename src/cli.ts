@@ -4,58 +4,64 @@
  * act as accounts interface.
  */
 
+import { name as command, version } from '../package.json'
+
+import path from 'path'
 import inquirer from 'inquirer'
-import chalkPipe from 'chalk-pipe'
 import inquirerFile from 'inquirer-file-path'
 import inquirerDir from 'inquirer-directory'
+import conf from './lib/conf'
 
-inquirer.registerPrompt('file', inquirerFile);
-inquirer.registerPrompt('dir', inquirerDir);
-
-inquirer.prompt('', ()=>{
-
-})
-
-// /**
-//  * @description
-//  * Handle CLI inputs, invoke relevant functions and 
-//  * act as accounts interface.
-//  */
-// import path from 'path'
+import Prompts from './prompts.json'
 
 // import * as accounts from './lib/accounts'
 // import * as auth from './lib/auth'
+// import { initialize } from './init'
 
-// const [ func, task ] = process.argv.slice(process.execArgv.length + 1)
-// const args = process.argv.slice(process.execArgv.length + 3)
+inquirer.registerPrompt('file', inquirerFile)
+inquirer.registerPrompt('dir', inquirerDir)
 
-// console.log('Get your credentials file at https://developers.google.com/gmail/api/quickstart/nodejs')
+process.env['VERBOSITY'] = 'true'
 
-// process.env['VERBOSITY'] = 'true'
+const execArgs = process.argv.slice(process.argv.indexOf(command) + 1)
+const task = execArgs.shift()
 
-// switch (func) {
-//   case 'account':
-//     accountHandler(task, args)
-//     break
+switch (task) {
+  case 'init':
+    console.log(conf.Green('Initialize and setup GMailMan'))
+    // initialize(execArgs)
+    break
 
-//   case 'authorize':
-//     authHandler(task, args)
-//     break
+  case 'account':
+    // accountHandler(task, args)
+    break
 
-//   case 'template':
-//     // use gmailer from the CLI
-//     console.log('Unimplemented')
-//     break
+  case 'authorize':
+    // authHandler(task, args)
+    break
 
-//   case 'send':
-//     // use gmailer from the CLI
-//     console.log('Unimplemented')
-//     break
+  case 'template':
+    // use gmailer from the CLI
+    console.log('Unimplemented')
+    break
 
-//   default:
-//     console.error(`Unknown function: '${func}'`)
-//     break
-// }
+  case 'send':
+    // use gmailer from the CLI
+    console.log('Unimplemented')
+    break
+
+  case 'help':
+    HelpMenu()
+    break
+
+  default:
+    console.error('Unrecognized command')
+    break
+}
+
+// inquirer.prompt('', ()=>{
+
+// })
 
 // /**
 //  * Handles all account related tasks
@@ -141,7 +147,37 @@ inquirer.prompt('', ()=>{
 //   }
 // }
 
+function toOptionsObject(args:string[]) {
+  let options = Object()
+  for (const arg of args.map(
+    str => str.includes('--') ? {
+      [str.slice(str.indexOf('--') + 2, str.indexOf('='))]: str.slice(str.indexOf('=') + 1)
+    } : null
+  ).filter(
+    _ => _ !== null
+  )) {
+    options = { ...options, ...arg }
+  }
+  return options
+}
 
-// export function templateHandler() {
-//   return
-// }
+function initHandler() {
+  const options = toOptionsObject(execArgs)
+
+}
+
+function HelpMenu() {
+  console.log(conf.Blue(command))
+  console.log(version, conf.format.Break)
+  console.log(conf.Green('Help Menu'))
+  
+  console.log('Get your credentials file at https://developers.google.com/gmail/api')
+
+  console.log('Available Commands')
+  for (const item in Prompts) {
+    if (Object.prototype.hasOwnProperty.call(Prompts, item)) {
+      console.log(conf.format.Tab, conf.Yellow(Prompts[item].command))
+      console.log(conf.format.Tab, Prompts[item].description, conf.format.Break)
+    }
+  }
+}

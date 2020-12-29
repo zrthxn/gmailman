@@ -307,7 +307,7 @@ export class Mailer {
 				if(options && !options.quiet)
 					console.log(`[${retryCount}] Retrying ${addressList.length} mails`)
 			}	
-		} while (retryCount>=0);
+		} while (retryCount>0);
 	}
 
 	/**

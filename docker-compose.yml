@@ -1,0 +1,16 @@
+version: v3
+
+services:
+  gmailman:
+    build: npm run build
+    ports:
+      - 3000:6501
+
+  mongo:
+    image: mongo
+    restart: always
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: default
+      MONGO_INITDB_ROOT_PASSWORD: example
