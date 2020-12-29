@@ -1,5 +1,5 @@
 import cluster from 'cluster'
-import GMailer from './Mailer'
+import Mailer from './Mailer'
 
 interface order {
 	delay: number
@@ -9,7 +9,7 @@ interface order {
  * @todo Multiprocessing
  */
 
-const mail = new GMailer({ userId: 'zrthxn@gmail.com', username: 'Alisamar Husain' })
+const mail = new Mailer({ userId: 'zrthxn@gmail.com', username: 'Alisamar Husain' })
 process.on('message', (order)=>{
 	setTimeout(function startInstance(){
 		mail.DatabaseDelivery(order.payload.mail, order.payload.content, order.payload.data)

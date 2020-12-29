@@ -16,6 +16,7 @@ export const conf = {
     Bold: '',
     Tab: '\t',
     Break: '\n',
+    Blank: '\n\n',
     CRLF: '\r\n'
   },
   

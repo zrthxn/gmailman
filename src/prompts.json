@@ -1,60 +1,66 @@
 {
-  "INIT": {
-    "command": "init",
-    "description": "Start a new project",
-    "prompts": [
-      {
-        "name": "path",
-        "type": "file",
-        "message": "Path to config file"
-      }
-    ]
-  },
-
-  "DOWN": {
-    "command": "down",
-    "description": "Stop the server and DB",
-    "prompts": [
-      {
-        "name": "confirm",
-        "type": "boolean",
-        "message": "Are you sure?"
-      }
-    ]
-  },
-
-  "ACCOUNT": {
-    "command": "account",
-    "description": "Manage accounts",
-    "subcommands": {
-      "ADD": {
-        "command": "add",
-        "description": "Add account",
-        "prompts": [
-          {
-            "name": "userid",
-            "type": "string",
-            "message": "Enter username to add"
-          }
-        ]
-      },
-
-      "DELETE": {
-        "command": "delete",
-        "description": "Delete account",
-        "prompts": [
-          {
-            "name": "userid",
-            "type": "string",
-            "message": "Which account to remove?"
-          }
-        ]
-      }
+  "prompts": [
+    {
+      "name": "task",
+      "type": "list",
+      "message": "Choose a function",
+      "choices": [
+        "init", "account", "help"
+      ]
     }
-  },
+  ],
 
-  "HELP": {
-    "command": "help",
-    "description": "Show the help menu"
+  "subcommands": {
+    "init": {
+      "description": "Start a new project",
+      "prompts": [
+        {
+          "name": "path",
+          "type": "file",
+          "message": "Path to config file"
+        }
+      ]
+    },
+
+    "account": {
+      "description": "Manage accounts",
+      "prompts": [
+        {
+          "name": "task",
+          "type": "list",
+          "message": "Choose a function",
+          "choices": [
+            "add", "delete"
+          ]
+        }
+      ],
+      "subcommands": {
+        "add": {
+          "description": "Add account",
+          "prompts": [
+            {
+              "name": "userid",
+              "type": "string",
+              "message": "Enter username to add"
+            }
+          ]
+        },
+
+        "delete": {
+          "description": "Delete account",
+          "prompts": [
+            {
+              "name": "userid",
+              "type": "string",
+              "message": "Which account to remove?"
+            }
+          ]
+        }
+      }
+    },
+
+    "help": {
+      "description": "Show the help menu"
+    }
   }
 }
