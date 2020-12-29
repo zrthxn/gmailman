@@ -8,7 +8,7 @@
     "test": "jest",
     "build": "rm -rf build && tsc && mv build/src/* build/ && rm build/package.json",
     "prepare": "npm run build && npm run test",
-    "postinstall": "node build/util/init.js"
+    "postinstall": "npm run build && node build/util/init.js"
   },
   "bin": {
     "gmailman": "build/cli.js"
@@ -35,7 +35,6 @@
     "@types/node": "^13.13.5",
     "jest": "^26.0.1",
     "pdf-lib": "^1.8.0",
-    "ts-jest": "^25.5.1",
     "tsc": "^1.20150623.0",
     "typescript": "^3.8.3"
   },
