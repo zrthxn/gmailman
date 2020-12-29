@@ -77,6 +77,10 @@ export async function readAttachment(filepath: string): Promise<Attachment> {
   }
 }
 
+/**
+ * @deprecated Data interpolation function. 
+ * Very very inefficient 
+ */
 // function interpolation(content, mail, data:DataItem[]) {
 //   var splits = content.split('$')
 //   var peices = [], identifiers = []
