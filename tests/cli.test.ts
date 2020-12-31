@@ -8,11 +8,8 @@ test('has prompts', () => {
 
 test('encoding', () => {
   expect(encodeExecArgs(['node','processChild.js'])).toStrictEqual({exec: [], args: {}})
-  expect(encodeExecArgs(['node','gmailman'])).toStrictEqual({exec: [], args: {}})
   expect(encodeExecArgs(['gmailman'])).toStrictEqual({exec: [], args: {}})
   
-  expect(encodeExecArgs(['gmailman', 'account']))
-    .toStrictEqual({exec: ['account'], args: {}})
   expect(encodeExecArgs(['gmailman', 'account', 'add']))
     .toStrictEqual({exec: ['account', 'add'], args: {}})
   

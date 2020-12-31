@@ -9,6 +9,7 @@ import { readTemplate } from '../lib/templates'
 
 import { Email, DataItem, DeliveryOptions, Attachment } from '..'
 import { GaxiosResponse } from 'gaxios'
+import conf from '../lib/conf'
 
 const _ENDL_ = '\r\n'
 const ATTACHMENT_MAXSIZE = 24 * 1024 * 1024
@@ -44,12 +45,16 @@ export class Mailer {
 	 * @param type Type of application (as in credentials)
 	 */
 	private async getAuthClient(type:string = 'installed') {
-		console.log('Authorizing', type, 'application, GET OAuth2 Token')
-		this.authClient = await authorize(this.userId, type)
-		this.service = google.gmail({ 
-			version: 'v1', 
-			auth: this.authClient
-		})
+		try {
+			console.log('Authorizing', type, 'application, GET OAuth2 Token')
+			this.authClient = await authorize(this.userId, type, this.SCOPES)
+			this.service = google.gmail({ 
+				version: 'v1', 
+				auth: this.authClient
+			})
+		} catch (error) {
+			console.error(conf.Red(error));
+		}
 	}
 
 	/**
@@ -222,19 +227,17 @@ export class Mailer {
 	 * @param dataPath Path of CSV file to read data from
 	 * @param template Name of template
 	 */
-	async DatabaseDelivery(mail:Email, datapath:string, options?:DeliveryOptions) {
-		if(options) {
-			if(options.template)
-				mail.body = await readTemplate(options.template)
+	async DatabaseDelivery(mail:Email, datapath:string, options:DeliveryOptions = {}) {
+		if(options.template)
+			mail.body = await readTemplate(options.template)
 
-			var retryCount = 0
-			if(options.retryFailed && options.retryCount)
-				retryCount = options.retryCount
-		}
+		// var retryCount = 0
+		// if(options.retryFailed && options.retryCount)
+		// 	retryCount = options.retryCount
 
 		if(!mail.body) throw 'Neither body nor template provided'
 		
-		var { data, addressList } = await readCSV(datapath)
+		const { data, addressList } = await readCSV(datapath)
 		var MailQueue = []
 
 		for (let IDX = 0; IDX < addressList.length; IDX++) {
@@ -266,48 +269,42 @@ export class Mailer {
 			)
 		}
 
-		let failAddressList = [], FailQueue = []
-		do {
-			try {
-				let index = 0
-				for (const address of addressList) {
-					if(options && !options.quiet)
-						console.log('Sending email to', address)
+		// let failAddressList = [], FailQueue = []
+		// do {
+			let index = 0
+			for (const address of addressList) {
+				console.log('Sending email to', address)
+				try {
 					if (address) {
-						try {
-							const { status } = await this.send(MailQueue[index])
-							index++
-							if (status===200) {
-								if (index < MailQueue.length)
-									continue
-								else 
-									return 
-							}
-							else {
-								FailQueue.push(MailQueue[index])
-								failAddressList.push(address)
-								throw `Unsuccessful sending to ${address}`
-							}
-						} catch (error) {
-							// console.error(error)
+						const { status } = { status: 200} //await this.send(MailQueue[index])
+						index++
+						if (status===200) {
+							if (index < MailQueue.length)
+								continue
+							else 
+								return 
+						}
+						else {
+							// FailQueue.push(MailQueue[index])
+							// failAddressList.push(address)
+							throw `Unsuccessful sending to ${address}`
 						}
 					} 
 					else
-						if(options && !options.quiet)
-							console.error(`Invalid row ${index}: No email address provided` )
+						throw `Invalid row ${index}: No email address provided`
+				} catch (error) {
+					console.error(conf.Red(error))
 				}
-			} catch (error) {
-				// console.error(error)
 			}
-
-			if(options && options.retryFailed) {
-				retryCount--
-				MailQueue = FailQueue
-				addressList = failAddressList
-				if(options && !options.quiet)
-					console.log(`[${retryCount}] Retrying ${addressList.length} mails`)
-			}	
-		} while (retryCount>0);
+			
+		// 	if(options.retryFailed) {
+		// 		retryCount--
+		// 		MailQueue = FailQueue
+		// 		addressList = failAddressList
+		// 		if(!options.quiet)
+		// 			console.log(`[${retryCount}] Retrying ${addressList.length} mails`)
+		// 	}	
+		// } while (retryCount>0);
 	}
 
 	/**

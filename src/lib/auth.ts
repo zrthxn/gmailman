@@ -16,26 +16,23 @@ import path from 'path'
  * Authorize with stored credentials file
  * @param userId The userId (email) to use to authorize 
  */
-export async function authorize(userId:string, type:string = 'installed') {
+export async function authorize(userId:string, type:string = 'installed', scopes?:string[]) {
   const credentials = await readCredentialsFile(userId)
   
-  try {
-    if(!credentials.hasOwnProperty(type))
-      throw 'Invalid credentials file.'
+  console.log('Authorizing access token with OAuth2...')
+  if(!credentials.hasOwnProperty(type))
+    throw 'Invalid credentials file.'
 
-    const { client_secret, client_id, redirect_uris } = credentials[type]
-    const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0])
+  const { client_secret, client_id, redirect_uris } = credentials[type]
+  const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0])
 
-    const token = await readTokenFile(userId)
-    if(!token)
-      return await getNewToken(oAuth2Client, userId)
-    else {
-      oAuth2Client.setCredentials(token)
-      return oAuth2Client
-    }
-  } catch (error) {
-    console.error(error)
-    return Promise.reject(error)
+  const token = await readTokenFile(userId)
+  if(!token)
+    return await getNewToken(oAuth2Client, userId, scopes)
+  else {
+    console.log('Successful')
+    oAuth2Client.setCredentials(token)
+    return oAuth2Client
   }
 }
 
