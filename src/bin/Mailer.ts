@@ -276,7 +276,7 @@ export class Mailer {
 				console.log('Sending email to', address)
 				try {
 					if (address) {
-						const { status } = { status: 200} //await this.send(MailQueue[index])
+						const { status } = await this.send(MailQueue[index])
 						index++
 						if (status===200) {
 							if (index < MailQueue.length)
