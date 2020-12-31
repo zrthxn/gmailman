@@ -1,0 +1,3 @@
+test('authorize', () => {
+  expect(null)
+})
