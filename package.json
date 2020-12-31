@@ -7,8 +7,7 @@
   "scripts": {
     "test": "jest",
     "build": "rm -rf build && tsc && sudo mv build/src/* build && rm build/package.json -rf build/src",
-    "prepare": "npm run build && npm test",
-    "postinstall": "npm run build && node build/util/init.js"
+    "prepare": "npm run build && npm test"
   },
   "bin": {
     "gmailman": "build/cli.js"
