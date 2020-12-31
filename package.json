@@ -1,6 +1,6 @@
 {
   "name": "gmailman",
-  "version": "0.2.10",
+  "version": "0.2.11-0",
   "description": "Serverside mailing for your website",
   "main": "build/index.js",
   "types": "build/index.d.ts",
