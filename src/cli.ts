@@ -12,8 +12,9 @@ import conf from './lib/conf'
 import { name as command, version } from '../package.json'
 import Prompts from './prompts.json'
 
-// import * as accounts from './lib/accounts'
-// import * as auth from './lib/auth'
+import * as accounts from './lib/accounts'
+import * as auth from './lib/auth'
+
 // import { initialize } from './init'
 
 inquirer.registerPrompt('file', inquirerFile)
@@ -24,7 +25,7 @@ process.env['VERBOSITY'] = 'true'
 const { exec, args } = encodeExecArgs(process.argv)
 
 export const functions = {
-  cli: useArgsGUI([], (task) => {
+  cli: (task) => {
     switch (task) {
       case undefined:
         return functions.cli
@@ -50,14 +51,15 @@ export const functions = {
         return null
     
       case 'help':
-        HelpMenu()
+        const helptopic = exec.join('.')
+        HelpMenu(helptopic)
         return null
     
       default:
         console.error('Unrecognized command')
         return null
     }
-  }),
+  },
   account: {
     switch: (task) => {
       switch (task) {
@@ -65,9 +67,11 @@ export const functions = {
           return functions.account.switch
 
         case 'add':
+          console.log(conf.Green('Add account'))
           return functions.account.add
       
         case 'delete':
+          console.log(conf.Red('Delete account'))
           return functions.account.del
 
         default:
@@ -75,12 +79,12 @@ export const functions = {
           return null
       }
     },
-    add: useArgsGUI([ args.userid ], () => {
-      console.log(conf.Green('Add account'))
+    add: useArgsPrompt([ args.userid, args.credentials ], () => {
+      // accounts.addAccount(args.userid, args.credentials)
+
       return null
     }),
-    del: useArgsGUI([ args.userid ], () => {
-      console.log(conf.Red('Delete account'))
+    del: useArgsPrompt([ args.userid ], () => {
       return null
     }) 
   }
@@ -171,7 +175,7 @@ export const functions = {
 // }
 
 
-// --------------------------------------------------------
+// ========================================================
 // Resilient execution logic
 
 // Start
@@ -187,17 +191,13 @@ export async function main() {
     // Execute the current task
     $exec = await $exec($task)
   
-    try {
-      if ($exec)
-        if ($task)
-          $prompts = $prompts.subcommands[$task]
-        else {
-          $task = (await triggerPrompt($prompts.prompts)).task
-          continue
-        }
-    } catch (error) {
-      return console.error(conf.Red(error))
-    }
+    if ($exec)
+      if ($task)
+        $prompts = $prompts.subcommands[$task]
+      else {
+        $task = (await triggerPrompt($prompts.prompts)).task
+        continue
+      }
 
     $task = exec.shift()
   } while ($exec)
@@ -205,15 +205,21 @@ export async function main() {
   console.log('Exiting')
 }
 
-main()
+try {
+  main()
+} catch (error) {
+  console.error(conf.Red(error))
+}
+
+// --------------------------------------------------------
 
 /**
  * Open the Inquirer.
  * @param prompts List of questions
  */
 async function triggerPrompt(prompts) {
-  if (args.hasOwnProperty('noprompt'))
-    throw new SyntaxError('Incomplete arguments while --noprompt is set')
+  if (args.hasOwnProperty('noprompt') && args.noprompt)
+    throw 'Invalid arguments. Need to trigger prompt but --noprompt is set.'
   
   // Can add validation here
   return await inquirer.prompt(prompts)
@@ -224,11 +230,11 @@ async function triggerPrompt(prompts) {
  * @param dependencies 
  * @param reducer 
  */
-function useArgsGUI(dependencies: any[], reducer:Function) {
+function useArgsPrompt(dependencies: any[], reducer:Function) {
   return async function handle(task) {
     // check if all dependencies are satisfied
     for (const dep of dependencies) {
-      // if any are missing, trigger gui for those
+      // if any are missing, trigger gui 
       if (!dep) {
         try {
           const response = await triggerPrompt($prompts.prompts)
@@ -241,6 +247,7 @@ function useArgsGUI(dependencies: any[], reducer:Function) {
           return reducer(task)
         } catch (error) {
           console.error(conf.Red(error))
+          break
         }
       }
     }
@@ -289,15 +296,19 @@ export function encodeExecArgs(argv:string[]) {
 /**
  * Help
  */
-function HelpMenu() {
-  console.log(conf.Blue('GMailMan'), version)
+function HelpMenu(helptopic) {
+  const subcommands = helptopic ? (
+    Prompts.subcommands[helptopic] ? Prompts.subcommands[helptopic].subcommands : Object()
+  ) : Prompts.subcommands
+  
+  console.log(conf.Blue(`GMailMan ${version}`))
   console.log(conf.Green('Help Menu'), conf.format.Break)
   
   console.log('Available Commands')
-  for (const command in Prompts.subcommands) {
-    if (Prompts.subcommands.hasOwnProperty(command)) {
+  for (const command in subcommands) {
+    if (subcommands.hasOwnProperty(command)) {
       console.log(conf.format.Tab, conf.Yellow(command))
-      console.log(conf.format.Tab, Prompts.subcommands[command].description, conf.format.Break)
+      console.log(conf.format.Tab, subcommands[command].description, conf.format.Break)
     }
   }
 

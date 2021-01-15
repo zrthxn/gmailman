@@ -7,19 +7,14 @@ test('has prompts', () => {
 })
 
 test('encoding', () => {
-  expect(encodeExecArgs(['node','processChild.js'])).toStrictEqual({exec: [], args: {}})
-  expect(encodeExecArgs(['gmailman'])).toStrictEqual({exec: [], args: {}})
+  expect(encodeExecArgs(['node','processChild.js','gmailman']))
+    .toStrictEqual({exec: [], args: {}})
   
-  expect(encodeExecArgs(['gmailman', 'account', 'add']))
-    .toStrictEqual({exec: ['account', 'add'], args: {}})
-  
-  expect(encodeExecArgs(['gmailman', 'account', 'add', '--userid=test']))
-    .toStrictEqual({exec: ['account', 'add'], args: {userid: "test"}})
-  expect(encodeExecArgs(['gmailman', 'account', 'add', '--tag']))
-    .toStrictEqual({exec: ['account', 'add'], args: {tag: true}})
+  expect(encodeExecArgs(['gmailman', 'account', 'add', '--userid=test', '--tag']))
+    .toStrictEqual({exec: ['account', 'add'], args: { userid: "test", tag: true }})
 })
 
-test('idempotency', () => {
+test('functions idempotency', () => {
   for (const key in functions) {
     if (functions.hasOwnProperty(key)) {
       if (functions[key].hasOwnProperty('switch')) {

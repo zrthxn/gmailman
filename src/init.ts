@@ -16,15 +16,13 @@ console.log(ROOTDIR)
 
 // fs.existsSync(ROOTDIR)
 
-fs.mkdirSync(ROOTDIR, { recursive: true })
-fs.mkdirSync(path.join(ROOTDIR, 'auth'), { recursive: true })
-fs.mkdirSync(path.join(ROOTDIR, 'templates'), { recursive: true })
-
-fs.writeFileSync(path.join(ROOTDIR, 'gmailer.config.json'), _init_config_)
-
-console.log(conf.Green('Initialized MAILDIR'))
-console.log('It is recommended that you add the \"mail\" directory to your .gitignore file.')
-
 export function initialize(options:string[] = []) {
+  fs.mkdirSync(ROOTDIR, { recursive: true })
 
+  fs.mkdirSync(path.join(ROOTDIR, 'auth'), { recursive: true })
+  fs.mkdirSync(path.join(ROOTDIR, 'templates'), { recursive: true })
+  fs.writeFileSync(path.join(ROOTDIR, 'gmailer.config.json'), _init_config_)
+
+  console.log(conf.Green('Initialized MAILDIR'))
+  console.log('It is recommended that you add the \"mail\" directory to your .gitignore file.')
 }

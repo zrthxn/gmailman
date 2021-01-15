@@ -42,6 +42,12 @@
               "name": "userid",
               "type": "string",
               "message": "Enter username to add"
+            },
+            {
+              "name": "credentials",
+              "type": "file",
+              "message": "Credentials file for this user",
+              "basePath": "../../"
             }
           ]
         },
